@@ -197,8 +197,10 @@ public sealed partial class MainWindow
             // What was applied to the old player is applied to the new one again.
             _shaderList = null;
             _animeChain = [];
-            _upscaleFilter = "";
+            _vppFilter = "";
             _upscaleScale = 0;
+            _vppHdr = false;
+            _smoothOn = false;
             _pictureHigh = PlayerTuning.Strong;
             _glassOpts = "";
             _subPos = "";
@@ -571,7 +573,14 @@ public sealed partial class MainWindow
             _log.Mark("video-reconfig", now - _loadAt);
         }
         // A new video starts on the best picture this PC draws; once its decoder and size are known, upscale or not.
-        if (name == "start-file") _lighterForThisVideo = false;
+        if (name == "start-file")
+        {
+            _lighterForThisVideo = false;
+            _smoothOff = false;
+            _videoHdrAsked = false;
+            // The filter stays in mpv's chain from the last video until this one's picture is known (ApplyPicture).
+            _vppHdr = false;
+        }
         if (name == "end-file" && !_firstFrameSeen && _playingVia != null && _playing is { } direct
             && data?.GetType().GetProperty("error")?.GetValue(data) is string why)
         {
@@ -586,8 +595,13 @@ public sealed partial class MainWindow
             return;
         }
         if (name == "video-reconfig") ApplyPicture();
-        // The output was opened again (another default device, a receiver turned on): clear dialogue follows it.
-        if (name == "audio-reconfig") OnUi(ApplyDialogue);
+        // The output was opened again (another default device, a receiver turned on): clear dialogue follows it, and
+        // smooth motion's timing (sound passed through to a receiver can't be resampled).
+        if (name == "audio-reconfig")
+        {
+            OnUi(ApplyDialogue);
+            if (_smoothChosen) Task.Run(() => ApplyPicture());
+        }
         OnUi(() =>
         {
             // A Play-chosen version that won't open before its first frame gives way to the next one (JellyfinLibrary).
@@ -618,10 +632,14 @@ public sealed partial class MainWindow
     // Direct3D 11 video processor, as Edge and Chrome ask for it. Only for SDR video decoded on the card, with Picture
     // on High quality. With the switch off the driver's processor would only scale plainly, worse than mpv's own
     // scalers, so then nothing changes.
-    private bool _upscaleOffNoted;
-    private string _upscaleFilter = "";
+    // RTX Video HDR goes in the same processor (one d3d11vpp, @exo-vpp): with its switch on in the driver, an SDR film on
+    // High quality is turned into HDR by the card (mpv's nvidia-true-hdr, BT.2020 PQ out) on a screen in HDR, and a
+    // screen that can show HDR and has it off is switched before the first frame by Auto HDR's rules (HdrFilms).
+    private bool _upscaleOffNoted, _videoHdrOffNoted, _videoHdrScreenNoted, _videoHdrAsked;
+    private string _vppFilter = "";
     private Timer? _upscaleRecheck;
     private double _upscaleScale;
+    private volatile bool _vppHdr;
 
     // The picture, chosen for this PC instead of in Settings: High quality (mpv's high-quality scalers, and the AI
     // upscaling above) on a dedicated graphics card on mains power; Balanced on integrated graphics (mpv's own scalers),
@@ -646,14 +664,76 @@ public sealed partial class MainWindow
                 _log.Write($"picture: {(high ? "high quality" : "balanced")}{why}");
             }
             ApplyAnime(mpv);
-            ApplyUpscaling(mpv);
-            // The player's readings say how the picture is drawn right now.
+            ApplyVideoProcessor(mpv);
+            ApplyMotion(mpv);
+            // The player's readings say how the picture is drawn and how it moves right now.
             var said = (_pictureHigh ? "High quality" : "Balanced")
-                + (_animeChain.Length > 0 ? " · ArtCNN" : _upscaleFilter.Length > 0 ? (PlayerTuning.Card.SuperResolution == "intel" ? " · Intel Super Resolution" : " · RTX Super Resolution") : "");
-            if (said == _pictureSaid) return;
-            _pictureSaid = said;
-            OnUi(() => Post(new { type = "picture", text = said }));
+                + (_animeChain.Length > 0 ? " · ArtCNN" : _upscaleScale > 0 ? (PlayerTuning.Card.SuperResolution == "intel" ? " · Intel Super Resolution" : " · RTX Super Resolution") : "")
+                + (_vppHdr ? " · RTX Video HDR" : "");
+            if (said != _pictureSaid)
+            {
+                _pictureSaid = said;
+                OnUi(() => Post(new { type = "picture", text = said }));
+            }
+            if (_motionSaid != _motionPosted)
+            {
+                var motion = _motionPosted = _motionSaid;
+                OnUi(() => Post(new { type = "motion", text = motion }));
+            }
         }
+    }
+
+    // Smooth motion (Settings › Playback, the page's choice, off unless picked; PictureRules.SmoothMotion): each frame
+    // timed to the screen's refreshes and the change from one to the next blended over one refresh, which ends 24 fps
+    // judder without inventing frames. Off for the rest of a video that keeps dropping frames, after the automatic
+    // picture has gone lighter first; off while a game runs and on battery.
+    private volatile bool _smoothChosen;
+    private bool _smoothOn, _smoothOff;
+    private string _motionSaid = "", _motionPosted = "";
+
+    /// <summary>The page says whether Smooth motion is chosen (app.js, at its start and when the choice changes).</summary>
+    private void SetSmooth(bool on)
+    {
+        if (on == _smoothChosen) return;
+        _smoothChosen = on;
+        _log.Write($"motion: smooth motion {(on ? "chosen" : "not chosen")}");
+        if (_mpv is not null) Task.Run(() => ApplyPicture());
+    }
+
+    private void ApplyMotion(MpvPlayer mpv)
+    {
+        try
+        {
+            static double Num(string? s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0;
+            var playing = mpv.Get("idle-active") == "no";
+            // The file's own rate, or mpv's measure of it when the file doesn't say (it has one a moment into the video).
+            var fps = Num(mpv.Get("container-fps")) is > 0 and var c ? c : Num(mpv.Get("estimated-vf-fps"));
+            var hz = Num(mpv.Get("display-fps"));
+            var battery = PlayerTuning.OnBattery();
+            var game = GameRunning();
+            var on = playing && PictureRules.SmoothMotion(_smoothChosen, _smoothOff, battery, game, fps, hz);
+            // A receiver takes the sound as it is: it can't be resampled to the video's nudged speed, so the video keeps
+            // time by repeating or dropping a frame now and then instead (display-vdrop), still blended.
+            var passthrough = mpv.Get("audio-out-params/format")?.StartsWith("spdif", StringComparison.Ordinal) == true;
+            var sync = on ? passthrough ? "display-vdrop" : "display-resample" : "audio";
+            if (on != _smoothOn || on && mpv.Get("video-sync") != sync)
+            {
+                if (on) mpv.Set("tscale", "oversample");
+                mpv.Set("video-sync", sync);
+                mpv.Set("interpolation", on ? "yes" : "no");
+                _smoothOn = on;
+                _log.Write(on ? $"motion: smooth, {fps:0.###} fps on a {hz:0.###} Hz screen ({sync})" : "motion: as filmed");
+            }
+            // Not measured yet: asked again in a moment, once mpv has measured the video.
+            if (_smoothChosen && playing && !on && fps <= 0) (_upscaleRecheck ??= new Timer(_ => ApplyPicture())).Change(2000, Timeout.Infinite);
+            _motionSaid = on ? $"Smooth · {fps:0.###} fps on {hz:0} Hz"
+                : !_smoothChosen || !playing ? ""
+                : _smoothOff ? "Off for this video"
+                : game ? "Off while a game runs"
+                : battery ? "Off on battery"
+                : "";
+        }
+        catch (Exception e) { _log.Write($"motion: {AppLog.Kind(e)}"); }
     }
 
     // Anime: ArtCNN (Artoriuz, MIT; Shaders/ArtCNN), a network trained on drawn art that doubles the picture's detail,
@@ -707,13 +787,19 @@ public sealed partial class MainWindow
         catch (Exception e) { _log.Write($"anime: {AppLog.Kind(e)}"); }
     }
 
-    private void ApplyUpscaling(MpvPlayer mpv)
+    private void ApplyVideoProcessor(MpvPlayer mpv)
     {
         try
         {
             static double Num(string? s) => double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) ? v : 0;
-            var want = "";
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            var parts = new List<string>();
             var height = Num(mpv.Get("video-params/h"));
+            var card = PlayerTuning.Card;
+            var hwdec = mpv.Get("hwdec-current");
+            var gamma = mpv.Get("video-params/gamma");
+            var anime = _animeChain.Length > 0;
+            var game = GameRunning();
             // Sized from the screen's height, a maximized window (shorter than the screen) or a widescreen film (1920x800 on
             // a 1080p screen went up to 2592x1080) had mpv shrink the upscaled picture back a little: fit to the window's
             // video area instead (osd-dimensions less its bars). Only to enlarge: drawn at twice the size and shrunk back
@@ -721,17 +807,16 @@ public sealed partial class MainWindow
             // mpv's own on the picture bench.
             double V(string name) => Num(mpv.Get(name));
             var scale = height > 0
-                ? PictureRules.SuperResolutionScale(PlayerTuning.Card, _pictureHigh, PlayerTuning.OnBattery(), _animeChain.Length > 0, mpv.Get("hwdec-current"), mpv.Get("video-params/gamma"), GameRunning(),
+                ? PictureRules.SuperResolutionScale(card, _pictureHigh, PlayerTuning.OnBattery(), anime, hwdec, gamma, game,
                     V("video-params/dw"), V("video-params/dh"),
                     V("osd-dimensions/w") - V("osd-dimensions/ml") - V("osd-dimensions/mr"), V("osd-dimensions/h") - V("osd-dimensions/mt") - V("osd-dimensions/mb"), _upscaleScale)
                 : 0;
-            var mode = PlayerTuning.Card.SuperResolution;
+            var mode = card.SuperResolution;
+            var setting = scale > 0 && mode is not null ? mode == "nvidia" ? NvidiaVideo.SuperResolutionSetting() : 1 : null;
             if (scale > 0 && mode is not null)
             {
                 // NVIDIA's runs only with its driver switch on (read from the driver); Intel's driver has no switch to read.
-                var setting = mode == "nvidia" ? NvidiaVideo.SuperResolutionSetting() : 1;
-                if (setting > 0)
-                    want = $"@exo-upscale:d3d11vpp=scaling-mode={mode}:scale={scale.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)}";
+                if (setting > 0) parts.Add($"scaling-mode={mode}:scale={scale.ToString("0.####", inv)}");
                 else if (!_upscaleOffNoted)
                 {
                     // Said once: the picture would gain from it, but the driver's switch is off (or can't be read).
@@ -739,14 +824,63 @@ public sealed partial class MainWindow
                     _log.Write($"upscaling: RTX Video Super Resolution is {(setting == 0 ? "off" : "unreadable")} in the driver; mpv scales instead");
                 }
             }
-            if (want == _upscaleFilter) return;
-            if (_upscaleFilter.Length > 0) mpv.Command("vf", "remove", "@exo-upscale");
-            if (want.Length > 0 && mpv.Command("vf", "add", want) < 0) want = "";
-            _upscaleFilter = want;
-            _upscaleScale = want.Length > 0 ? scale : 0;
-            _log.Write(want.Length > 0 ? $"upscaling: {(mode == "nvidia" ? $"RTX Video Super Resolution (driver quality {NvidiaVideo.SuperResolutionSetting()})" : "Intel Video Super Resolution")}, {height:0}p x{scale:0.##} in a {Num(mpv.Get("osd-dimensions/w")):0}x{Num(mpv.Get("osd-dimensions/h")):0} window" : "upscaling: off");
+            var upscaled = parts.Count > 0;
+
+            // RTX Video HDR: the same rules as the upscaler, its own driver switch, and a screen in HDR.
+            var hdr = false;
+            if (card.VideoHdr && height > 0 && !PictureRules.Hdr(gamma))
+            {
+                var driverOn = NvidiaVideo.VideoHdrOn();
+                if (PictureRules.VideoHdrWanted(card, _pictureHigh, anime, hwdec, gamma, game, driverOn))
+                {
+                    var screen = DisplayHdr.ForWindow(_hwnd);
+                    hdr = PictureRules.VideoHdrRuns(true, screen?.Enabled == true);
+                    // A screen that can show HDR and has it off is switched once for the video, before its first frame
+                    // (TitleWantsHdr holds it), and the filter goes in once the screen is in HDR.
+                    if (!hdr && !_videoHdrAsked && !_firstFrameSeen && screen is { Supported: true })
+                    {
+                        _videoHdrAsked = true;
+                        TitleWantsHdr(sdrToHdr: true);
+                    }
+                    else if (!hdr && !_videoHdrScreenNoted)
+                    {
+                        _videoHdrScreenNoted = true;
+                        _log.Write(screen is { Supported: true }
+                            ? "hdr: RTX Video HDR waits for the screen to be in HDR; the film plays in SDR"
+                            : "hdr: this screen can't show HDR; RTX Video HDR is not used");
+                    }
+                }
+                else if (driverOn != true && !_videoHdrOffNoted)
+                {
+                    _videoHdrOffNoted = true;
+                    _log.Write($"hdr: RTX Video HDR is {(driverOn == false ? "off" : "unreadable")} in the driver; SDR films stay SDR");
+                }
+            }
+            if (hdr) parts.Add("nvidia-true-hdr");
+
+            var want = parts.Count > 0 ? "@exo-vpp:d3d11vpp=" + string.Join(":", parts) : "";
+            if (want == _vppFilter)
+            {
+                _vppHdr = hdr && want.Length > 0;
+                return;
+            }
+            if (_vppFilter.Length > 0) mpv.Command("vf", "remove", "@exo-vpp");
+            if (want.Length > 0 && mpv.Command("vf", "add", want) < 0)
+            {
+                _log.Write($"video processor: mpv refused {want}");
+                want = "";
+            }
+            _vppFilter = want;
+            _upscaleScale = want.Length > 0 && upscaled ? scale : 0;
+            _vppHdr = want.Length > 0 && hdr;
+            var said = new List<string>();
+            if (_upscaleScale > 0) said.Add($"{(mode == "nvidia" ? $"RTX Video Super Resolution (driver quality {setting})" : "Intel Video Super Resolution")}, {height:0}p x{scale:0.##} in a {V("osd-dimensions/w"):0}x{V("osd-dimensions/h"):0} window");
+            if (_vppHdr) said.Add($"RTX Video HDR, {height:0}p SDR to HDR10");
+            _log.Write(said.Count > 0 ? $"video processor: {string.Join("; ", said)}" : "video processor: off");
+            // A title ended with HDR held for a next one: this one keeps it, as an HDR title would.
+            if (_vppHdr) lock (_filmHdrLock) { if (_filmHold is not null) _filmHold.NextIsHdr = true; }
         }
-        catch (Exception e) { _log.Write($"upscaling: {AppLog.Kind(e)}"); }
+        catch (Exception e) { _log.Write($"video processor: {AppLog.Kind(e)}"); }
     }
 
     // A game is running: Exo Launcher signals it with a named event while any library game runs (its
@@ -821,18 +955,26 @@ public sealed partial class MainWindow
             var (newDrops, newLate) = (drops - _drops, late - _late);
             (_drops, _late) = (drops, late);
             if (mpv.Get("pause") != "no" || mpv.Get("idle-active") == "yes") return;
-            if (_pictureHigh && newDrops >= DropsThatLighten && !_lighterForThisVideo)
+            // A minute of dropped frames lightens one step at a time, the automatic choices first: ArtCNN, then High
+            // quality with the driver's upscaler and RTX Video HDR, and last the smooth motion you chose.
+            if (newDrops >= DropsThatLighten)
             {
-                if (_animeChain.Length > 0)
+                if (_pictureHigh && !_lighterForThisVideo && _animeChain.Length > 0)
                 {
                     _animeOff = true;
                     _log.Write($"anime: ArtCNN off for this video, after {newDrops} dropped frames in a minute");
                     ApplyPicture();
                 }
-                else
+                else if (_pictureHigh && !_lighterForThisVideo)
                 {
                     _lighterForThisVideo = true;
                     ApplyPicture($" for this video, after {newDrops} dropped frames in a minute");
+                }
+                else if (_smoothOn && !_smoothOff)
+                {
+                    _smoothOff = true;
+                    _log.Write($"motion: smooth motion off for this video, after {newDrops} dropped frames in a minute");
+                    ApplyPicture();
                 }
             }
             // Filling the buffer well ahead of the picture, mpv reads as fast as the link gives: that is its speed.
@@ -842,7 +984,9 @@ public sealed partial class MainWindow
             var bitrate = (Num(mpv.Get("video-bitrate")) + Num(mpv.Get("audio-bitrate"))) / 1e6;
             if (bitrate > 0 && link > bitrate * 1.5) LinkSpeed.Record(link);
             var fps = double.TryParse(mpv.Get("container-fps"), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : 0;
-            _log.Write($"playing: {newDrops} dropped, {newLate} late in the last minute · {mpv.Get("hwdec-current")} · {mpv.Get("video-params/w")}x{mpv.Get("video-params/h")} {mpv.Get("video-format")} {mpv.Get("video-params/gamma")} · {fps:0.###} fps");
+            var motion = _smoothOn ? $" · smooth on {Num(mpv.Get("display-fps")):0.###} Hz, {mpv.Get("mistimed-frame-count") ?? "0"} mistimed" : "";
+            var output = _vppHdr ? $" · out {mpv.Get("video-out-params/gamma")} to a {mpv.Get("video-target-params/gamma")} screen" : "";
+            _log.Write($"playing: {newDrops} dropped, {newLate} late in the last minute · {mpv.Get("hwdec-current")} · {mpv.Get("video-params/w")}x{mpv.Get("video-params/h")} {mpv.Get("video-format")} {mpv.Get("video-params/gamma")} · {fps:0.###} fps{motion}{output}");
         }
         catch (Exception e) { _log.Write($"playing: {AppLog.Kind(e)}"); }
     }

@@ -346,7 +346,7 @@ public sealed partial class MainWindow : Window, IPlayerSurface
                 break;
             case "ready":
                 // The page loaded after mpv started: give it everything it missed.
-                Post(new { type = "hello", tuning = PlayerTuning.Describe(), picture = _pictureSaid, timings = _log.Marks, app = Info() });
+                Post(new { type = "hello", tuning = PlayerTuning.Describe(), picture = _pictureSaid, motion = _motionPosted, timings = _log.Marks, app = Info() });
                 if (_playing != null) Post(new { type = "playing", title = _mpv?.Get("force-media-title"), started = _firstFrameSeen });
                 NotifyWindowState(force: true);
                 Post(new { type = "fullscreen", on = _fullScreen });
@@ -401,6 +401,9 @@ public sealed partial class MainWindow : Window, IPlayerSurface
                 break;
             case "anime":
                 SetAnime((bool?)msg["on"] == true);
+                break;
+            case "smooth":
+                SetSmooth((bool?)msg["on"] == true);
                 break;
             case "media":
                 SetMedia(msg);

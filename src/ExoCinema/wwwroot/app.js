@@ -913,6 +913,7 @@ $('profileBtn').addEventListener('click', () => openSettings())
 
 const PREFS = {
   autoplay: { label: 'Play next episode', fallback: 'on' },
+  smooth: { label: 'Smooth motion', fallback: 'off' },
 }
 
 const pref = (key) => { try { return localStorage.getItem(`exo:pref:${key}`) ?? PREFS[key].fallback } catch { return PREFS[key].fallback } }
@@ -922,6 +923,12 @@ function setPref(key, value) {
   applyPrefs()
   syncPut('setting', key, value)
 }
+
+// Smooth motion is the player's to apply (MainWindow.Player.cs › ApplyMotion): told at the start and whenever the
+// choice changes, here or on another PC.
+const tellSmooth = () => send({ cmd: 'smooth', on: pref('smooth') === 'on' })
+tellSmooth()
+window.addEventListener('exo:prefs', tellSmooth)
 
 // ---- Sync: what your Exo profile carries to your other PCs (end to end encrypted). The host takes only what
 // Sync/CinemaSettings.cs lists: these choices and each show's languages.
@@ -1054,7 +1061,7 @@ function settingsPageBody(id) {
     case 'account':
       return accountRows()
     case 'playback':
-      return `<section class="set-group" id="set-playback">${prefRow('autoplay')}</section>`
+      return `<section class="set-group" id="set-playback">${prefRow('autoplay')}${prefRow('smooth')}</section>`
     case 'jellyfin':
       // Signed out, the same form as the sign-in room; signed in, the account's row.
       return jellyfin.read && !jellyfin.me

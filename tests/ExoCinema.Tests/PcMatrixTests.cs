@@ -92,6 +92,29 @@ public sealed class PcMatrixTests
             var can = card.SuperResolution is { } mode && (mode == "nvidia" ? high : !battery) && hwdec == "d3d11va" && !hdr && !anime && !game && fit >= PictureRules.MinUpscale + 0.001;
             var fresh = PictureRules.SuperResolutionScale(card, high, battery, anime, hwdec, v.Gamma, game, v.Dw, v.Dh, shownW, shownH, 0);
             if (can) Assert.True(Math.Abs(fresh - Math.Min(4, Math.Min(shownW / v.Dw, shownH / v.Dh))) < 0.001, $"RTX Video missing: {card.Name}, {v.Label} in {window}");
+
+            // RTX Video HDR: only an RTX card, on High quality, an SDR picture the card decoded, with no game, not under
+            // ArtCNN, its driver switch on; and it runs only on a screen in HDR. Wherever all that holds, it runs.
+            foreach (var driverOn in new bool?[] { true, false, null })
+            {
+                var wanted = PictureRules.VideoHdrWanted(card, high, anime, hwdec, v.Gamma, game, driverOn);
+                if (wanted) Assert.True(card.Rtx && card.Vendor == "nvidia" && high && !hdr && hwdec == "d3d11va" && !game && !anime && driverOn == true, $"RTX Video HDR where it can't run: {card.Name}, {v.Label}");
+                if (card.Rtx && high && !hdr && hwdec == "d3d11va" && !game && !anime && driverOn == true) Assert.True(wanted, $"RTX Video HDR missing: {card.Name}, {v.Label}");
+                Assert.Equal(wanted && screen.Hdr, PictureRules.VideoHdrRuns(wanted, screen.Hdr));
+                if (card.Vendor != "nvidia") Assert.False(wanted, $"RTX Video HDR on {card.Name}");
+            }
+        }
+
+        // Smooth motion: only when chosen, never on battery, during a game or once a video turned it off, and only with a
+        // video no faster than the screen.
+        foreach (var fps in new[] { 0, 23.976, 24, 25, 29.97, 50, 59.94, 60, 120, 240 })
+        foreach (var chosen in new[] { true, false })
+        foreach (var off in new[] { false, true })
+        foreach (var game in new[] { false, true })
+        {
+            var smooth = PictureRules.SmoothMotion(chosen, off, battery, game, fps, screen.Hz);
+            if (smooth) Assert.True(chosen && !off && !battery && !game && fps > 0 && fps <= screen.Hz * 1.01, $"smooth motion where it can't run: {fps} fps on {screen.Hz} Hz");
+            if (chosen && !off && !battery && !game && fps > 0 && fps <= screen.Hz) Assert.True(smooth, $"smooth motion missing: {fps} fps on {screen.Hz} Hz");
         }
 
         var cap = PictureRules.HeightCap(card, v.Codec, v.TenBit);
@@ -165,6 +188,24 @@ public sealed class PcMatrixTests
             Assert.Equal(1.5, PictureRules.SuperResolutionScale(card, true, false, false, "d3d11va", "bt.1886", false, 1280, 720, 1920, 1080, 0));
             Assert.Equal(0, PictureRules.SuperResolutionScale(card, false, false, false, "d3d11va", "bt.1886", false, 1280, 720, 1920, 1080, 0));
         }
+        // RTX Video HDR on RTX cards only: GTX, AMD and Intel have no SDR-to-HDR a player can call.
+        foreach (var card in new[] { SimulatedPcs.Gtx1060, SimulatedPcs.Gtx1650, SimulatedPcs.Rx7900Xtx, SimulatedPcs.Radeon780M, SimulatedPcs.ArcA770, SimulatedPcs.IrisXe })
+        {
+            Assert.False(card.VideoHdr);
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", "bt.1886", false, true));
+        }
+        foreach (var card in new[] { SimulatedPcs.Rtx2060, SimulatedPcs.Rtx3070, SimulatedPcs.Rtx5090 })
+        {
+            Assert.True(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", "bt.1886", false, true));
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", "pq", false, true));    // already HDR
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", null, false, true));    // picture not known yet
+            Assert.False(PictureRules.VideoHdrWanted(card, false, false, "d3d11va", "bt.1886", false, true)); // Balanced
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", "bt.1886", false, false)); // driver switch off
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "no", "bt.1886", false, true));    // decoded in software
+            Assert.False(PictureRules.VideoHdrWanted(card, true, true, "d3d11va", "bt.1886", false, true)); // under ArtCNN
+            Assert.False(PictureRules.VideoHdrWanted(card, true, false, "d3d11va", "bt.1886", true, true)); // a game runs
+            Assert.False(PictureRules.VideoHdrRuns(true, screenHdrOn: false));
+        }
         // Intel's on Xe and Arc, built in too (it isn't High quality there), on mains power only.
         foreach (var card in new[] { SimulatedPcs.ArcA770, SimulatedPcs.ArcB580, SimulatedPcs.IrisXe, SimulatedPcs.MeteorLakeArc, SimulatedPcs.LunarLakeArc })
         {
@@ -172,6 +213,22 @@ public sealed class PcMatrixTests
             Assert.Equal(1.5, PictureRules.SuperResolutionScale(card, false, false, false, "d3d11va", "bt.1886", false, 1280, 720, 1920, 1080, 0));
             Assert.Equal(0, PictureRules.SuperResolutionScale(card, false, true, false, "d3d11va", "bt.1886", false, 1280, 720, 1920, 1080, 0));
         }
+    }
+
+    [Fact]
+    public void Smooth_motion_is_chosen_and_steps_aside()
+    {
+        Assert.True(PictureRules.SmoothMotion(true, false, false, false, 23.976, 60));
+        Assert.True(PictureRules.SmoothMotion(true, false, false, false, 23.976, 164.917));
+        Assert.True(PictureRules.SmoothMotion(true, false, false, false, 60, 59.94));   // within mpv's 1% nudge
+        Assert.False(PictureRules.SmoothMotion(false, false, false, false, 23.976, 60)); // not chosen: off by default
+        Assert.False(PictureRules.SmoothMotion(true, true, false, false, 23.976, 60));   // off for this video (dropped frames)
+        Assert.False(PictureRules.SmoothMotion(true, false, true, false, 23.976, 60));   // on battery
+        Assert.False(PictureRules.SmoothMotion(true, false, false, true, 23.976, 60));   // a game runs
+        Assert.False(PictureRules.SmoothMotion(true, false, false, false, 0, 60));       // the video's rate not known yet
+        Assert.False(PictureRules.SmoothMotion(true, false, false, false, 23.976, 0));   // the screen's rate not known
+        Assert.False(PictureRules.SmoothMotion(true, false, false, false, 120, 60));     // faster than the screen
+        Assert.False(PictureRules.SmoothMotion(true, false, false, false, double.NaN, 60));
     }
 
 }

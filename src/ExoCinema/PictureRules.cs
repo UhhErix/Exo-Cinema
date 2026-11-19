@@ -54,6 +54,33 @@ internal static class PictureRules
     }
 
     /// <summary>
+    /// RTX Video HDR wants this video (<see cref="GraphicsCard.VideoHdr"/>): the driver turns an SDR picture into HDR
+    /// in the same video processor as the upscaler, so the same rules hold. An RTX card on High quality, decoding the
+    /// video itself, an SDR picture (an HDR one is shown as it is), no game running, not under ArtCNN (whose passes
+    /// read the picture's own planes, which the HDR output no longer has), and its switch on in the driver
+    /// (<paramref name="driverOn"/>: Exo Launcher's PC › Display or NVIDIA's settings). Whether it runs also takes a
+    /// screen in HDR (<see cref="VideoHdrRuns"/>): on an SDR screen mpv would only map it back.
+    /// </summary>
+    public static bool VideoHdrWanted(GraphicsCard card, bool high, bool animeUpscaled, string? hwdec, string? gamma, bool gameRunning, bool? driverOn) =>
+        card.VideoHdr && high && !animeUpscaled && hwdec == "d3d11va" && gamma is { Length: > 0 } and not "auto" && !Hdr(gamma) && !gameRunning && driverOn == true;
+
+    /// <summary>RTX Video HDR runs: wanted, on a screen in HDR now. A screen that can show HDR and has it off is switched
+    /// first, by Auto HDR's rules (HdrFilms.ShouldSwitchOn), and the filter follows once it is in HDR.</summary>
+    public static bool VideoHdrRuns(bool wanted, bool screenHdrOn) => wanted && screenHdrOn;
+
+    /// <summary>
+    /// Smooth motion (Settings › Playback, off unless chosen): mpv shows each frame for exactly its share of the
+    /// screen's refreshes (video-sync=display-resample, the video's speed nudged by up to 1% to the screen's rate) and
+    /// blends only the refresh where one frame gives way to the next (interpolation with tscale=oversample). That ends
+    /// the judder of 24 fps on a 60 Hz screen (3:2 pulldown) without making frames that were never filmed, so films
+    /// don't take the soap-opera look. On mains power, with no game running, not turned off for this video by dropped
+    /// frames, and only with both rates known and a video no faster than the screen.
+    /// </summary>
+    public static bool SmoothMotion(bool chosen, bool offForThisVideo, bool onBattery, bool gameRunning, double videoFps, double screenHz) =>
+        chosen && !offForThisVideo && !onBattery && !gameRunning
+        && videoFps is > 1 and < 1000 && screenHz is > 20 and < 1000 && videoFps <= screenHz * 1.01;
+
+    /// <summary>
     /// The tallest picture worth picking for a stream: any on a strong card that decodes it itself; up to 1080p otherwise,
     /// as built-in graphics or a video the card can't decode (4K in software is what stutters).
     /// </summary>

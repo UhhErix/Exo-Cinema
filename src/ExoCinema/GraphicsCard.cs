@@ -23,6 +23,13 @@ internal sealed partial record GraphicsCard(string Name, uint VendorId, bool Int
     public string? SuperResolution => Rtx ? "nvidia" : Vendor == "intel" && Decoders.HasFlag(VideoDecoders.Av1) ? "intel" : null;
 
     /// <summary>
+    /// The driver turns an SDR picture into HDR: NVIDIA's RTX Video HDR on RTX cards (driver 551.23 and later), which
+    /// mpv's d3d11vpp calls as nvidia-true-hdr. Neither AMD's nor Intel's driver has an SDR-to-HDR conversion for video
+    /// (as of their late-2026 drivers), and mpv calls none: on their cards SDR stays SDR.
+    /// </summary>
+    public bool VideoHdr => Rtx;
+
+    /// <summary>
     /// A dedicated card of the last decade: mpv's high-quality scalers, the AI upscaling and pictures above 1080p. Told by
     /// what it is rather than by its name ("Arc" is also Intel's built-in graphics, "RX Vega" AMD's): not built in, from a
     /// maker with a video driver, and either decoding 10-bit HEVC (2016 on: GeForce 10, Radeon RX 400, Arc) or with

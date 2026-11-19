@@ -8,8 +8,8 @@ namespace ExoCinema.Sync;
 /// What of Exo Cinema's settings syncs, under the sub-key <c>cinema</c> (platform plan §2.7), and nothing else: only
 /// these items are taken from the page or from another PC, each checked for its shape.
 /// <list type="bullet">
-/// <item><c>setting</c>: Material, Reduce motion, Source and Play next episode, by their keys, with one of their
-/// values. Reduce motion is the person's need, wherever they sit.</item>
+/// <item><c>setting</c>: Material, Reduce motion, Source, Play next episode and Smooth motion, by their keys, with one
+/// of their values. Reduce motion is the person's need, wherever they sit.</item>
 /// <item><c>languages</c>: the audio and subtitle languages last chosen for a show, by its public id (Exo Watch's,
 /// never a server's item id), or <c>movies</c> for films; each a language code or <c>off</c>.</item>
 /// <item><c>server</c> <c>last</c>: only its removal. It was the Jellyfin server's address and name, from when Cinema
@@ -32,6 +32,7 @@ internal static partial class CinemaSettings
         ["motion"] = ["off", "on"],
         ["source"] = ["best", "ask"],
         ["autoplay"] = ["on", "off"],
+        ["smooth"] = ["off", "on"],
     };
 
     /// <summary>
@@ -44,6 +45,7 @@ internal static partial class CinemaSettings
         ["setting/motion"] = "Reduce motion is your need, wherever you sit.",
         ["setting/source"] = "Best or Ask is how you like to pick a version.",
         ["setting/autoplay"] = "Play next episode is how you watch shows.",
+        ["setting/smooth"] = "Smooth motion is how you like films to move; each PC still turns it off where it can't keep up.",
         ["languages"] = "The audio and subtitles you pick for a show are yours, not the PC's.",
         ["server"] = "Only the old Jellyfin address's removal, so it leaves every PC's copy of the profile.",
     };

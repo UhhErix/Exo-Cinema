@@ -32,6 +32,16 @@ public sealed partial class MainWindow
     {
         if (name == "eof-reached" && value is true) { EndFilmTitle(); return; }
         if (name != "video-params/gamma" || value is not string gamma || !PictureRules.Hdr(gamma)) return;
+        TitleWantsHdr(sdrToHdr: false);
+    }
+
+    /// <summary>
+    /// A title wants its screen in HDR: its picture is HDR, or RTX Video HDR turns its SDR picture into HDR
+    /// (<paramref name="sdrToHdr"/>, from MainWindow.Player.cs › ApplyVideoProcessor, which puts the filter in once the
+    /// screen is in HDR). The same rules either way: HdrFilms.ShouldSwitchOn, held before the first frame, back off after.
+    /// </summary>
+    private void TitleWantsHdr(bool sdrToHdr)
+    {
         // An HDR title starting during a hold keeps HDR on for it: the hold ends at its next decision.
         lock (_filmHdrLock)
         {
@@ -44,16 +54,18 @@ public sealed partial class MainWindow
         if (pausedHere) mpv!.Set("pause", "yes");
         Task.Run(() =>
         {
-            try { SwitchFilmHdrOn(mpv, pausedHere); }
+            try { SwitchFilmHdrOn(mpv, pausedHere, sdrToHdr); }
             finally
             {
+                // RTX Video HDR goes in while the first frame is still held, so the film starts in HDR.
+                if (sdrToHdr) ApplyPicture();
                 if (pausedHere) mpv!.Set("pause", "no");
                 Interlocked.Exchange(ref _filmSwitching, 0);
             }
         });
     }
 
-    private void SwitchFilmHdrOn(MpvPlayer? mpv, bool held)
+    private void SwitchFilmHdrOn(MpvPlayer? mpv, bool held, bool sdrToHdr)
     {
         var screen = DisplayHdr.ForWindow(_hwnd);
         var gaming = GameRunning();
@@ -81,7 +93,7 @@ public sealed partial class MainWindow
         }
         var reached = WaitForFilmHdr(screen.DevicePath, true);
         _log.Write(reached
-            ? $"hdr: HDR on for this film's screen ({screen.RefreshHz:0} Hz), before the first frame"
+            ? $"hdr: HDR on for this film's screen ({screen.RefreshHz:0} Hz), before the first frame{(sdrToHdr ? ", for RTX Video HDR" : "")}"
             : "hdr: the screen did not report HDR in time; the film starts anyway and HDR goes off when it ends");
     }
 
@@ -150,7 +162,7 @@ public sealed partial class MainWindow
         try
         {
             var mpv = _mpv;
-            return mpv is not null && HdrFilms.HdrTitlePlaying(mpv.Get("idle-active"), mpv.Get("eof-reached"), mpv.Get("video-params/gamma"));
+            return mpv is not null && HdrFilms.HdrTitlePlaying(mpv.Get("idle-active"), mpv.Get("eof-reached"), mpv.Get("video-params/gamma"), _vppHdr);
         }
         catch (ObjectDisposedException) { return false; }
     }

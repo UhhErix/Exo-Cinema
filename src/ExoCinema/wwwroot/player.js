@@ -132,6 +132,7 @@ function drawReadings() {
   const rows = [
     ['GPU', state.tuning.gpu],
     ['Picture', state.picture],
+    ['Motion', state.motion],
     ['Plays by', state.playMethod],
     // Software decoding says what it is decoding, which says why (10-bit H.264 has no hardware decoder anywhere).
     ['Decoder', p['hwdec-current'] && p['hwdec-current'] !== 'no' ? p['hwdec-current'] : `software · ${[p['video-format'], p['video-params/pixelformat']].filter(Boolean).join(' ')}`],
@@ -224,10 +225,16 @@ window.chrome.webview.addEventListener('message', ({ data: msg }) => {
     case 'hello':
       state.tuning = msg.tuning
       state.picture = msg.picture
+      state.motion = msg.motion
       Object.assign(state.timings, msg.timings)
       break
     case 'picture':
       state.picture = msg.text
+      drawReadings()
+      break
+    // Smooth motion, when chosen in Settings › Playback: how the video is timed to the screen, or why it isn't.
+    case 'motion':
+      state.motion = msg.text
       drawReadings()
       break
     case 'video-glass':

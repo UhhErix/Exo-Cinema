@@ -9,13 +9,15 @@ public sealed class CinemaSettingsTests
     private static JsonNode? J(string json) => JsonNode.Parse(json);
 
     [Fact]
-    public void The_four_choices_sync_with_their_own_values()
+    public void The_five_choices_sync_with_their_own_values()
     {
         Assert.True(CinemaSettings.Accept("setting", "material", J("\"solid\"")));
         Assert.True(CinemaSettings.Accept("setting", "motion", J("\"on\"")));
         Assert.True(CinemaSettings.Accept("setting", "source", J("\"ask\"")));
         Assert.True(CinemaSettings.Accept("setting", "autoplay", J("\"off\"")));
         Assert.True(CinemaSettings.Accept("setting", "autoplay", null)); // a delete
+        Assert.True(CinemaSettings.Accept("setting", "smooth", J("\"on\"")));
+        Assert.False(CinemaSettings.Accept("setting", "smooth", J("\"rife\"")));
         Assert.False(CinemaSettings.Accept("setting", "material", J("\"neon\"")));
         Assert.False(CinemaSettings.Accept("setting", "material", J("1")));
     }
