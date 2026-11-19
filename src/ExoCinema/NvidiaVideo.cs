@@ -3,14 +3,15 @@ using System.Runtime.InteropServices;
 namespace ExoCinema;
 
 /// <summary>
-/// Whether NVIDIA's RTX Video Super Resolution is on, read the way Exo Launcher reads it (its Helpers/NvidiaVideo.cs,
-/// from NVIDIA Control Panel's own calls): NvAPI_GetVideoStateEx 0x0B6EF8B9 with a 0x80-byte struct, version 0x10080,
-/// component 29 at 4; supported is flags@0xC bit 0, on is enable@0x10, the quality is lastValueSet@0x58 (1-4, 5 Auto).
-/// The setting is global and Exo Launcher's to change (PC › Display): Exo Cinema only reads it, never writes it.
+/// Whether NVIDIA's RTX Video Super Resolution and RTX Video HDR are on, read the way Exo Launcher reads them (its
+/// Helpers/NvidiaVideo.cs, from NVIDIA Control Panel's own calls): NvAPI_GetVideoStateEx 0x0B6EF8B9 with a 0x80-byte
+/// struct, version 0x10080, the component at 4 (29 Super resolution, 30 HDR); supported is flags@0xC bit 0, on is
+/// enable@0x10, the value is lastValueSet@0x58 (Super resolution's quality 1-4, 5 Auto; HDR any value but 0).
+/// The settings are global and Exo Launcher's to change (PC › Display): Exo Cinema only reads them, never writes them.
 /// </summary>
 internal static unsafe class NvidiaVideo
 {
-    private const int SuperResolution = 29;
+    private const int SuperResolution = 29, VideoHdr = 30;
     private static readonly Lock Gate = new();
     private static bool? _available;
 
@@ -18,7 +19,16 @@ internal static unsafe class NvidiaVideo
     private static extern nint QueryInterface(uint id);
 
     /// <summary>Super resolution's setting: 0 off, 1-4 quality, 5 Auto; null without an NVIDIA driver that has it.</summary>
-    public static int? SuperResolutionSetting()
+    public static int? SuperResolutionSetting() => Setting(SuperResolution);
+
+    /// <summary>
+    /// RTX Video HDR's switch: true on, false off, null without an NVIDIA driver that has it (551.23 and later, RTX cards).
+    /// The driver's processor turns SDR into HDR even with the switch off when a player asks (seen on an RTX 3070 with
+    /// 621.24), so the switch is the user's say, not the driver's limit: off, Exo Cinema doesn't ask.
+    /// </summary>
+    public static bool? VideoHdrOn() => Setting(VideoHdr) is { } value ? value != 0 : null;
+
+    private static int? Setting(int component)
     {
         lock (Gate)
         {
@@ -28,7 +38,7 @@ internal static unsafe class NvidiaVideo
                 var data = stackalloc byte[0x80];
                 new Span<byte>(data, 0x80).Clear();
                 *(uint*)data = 0x10080;
-                *(uint*)(data + 4) = SuperResolution;
+                *(uint*)(data + 4) = (uint)component;
                 var get = (delegate* unmanaged[Cdecl]<nint, byte*, int>)Resolve(0x0B6EF8B9);
                 if (get(handle, data) != 0 || (*(uint*)(data + 0xC) & 1) == 0) return null;
                 return *(int*)(data + 0x10) == 0 ? 0 : *(int*)(data + 0x58);

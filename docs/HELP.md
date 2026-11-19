@@ -57,7 +57,7 @@ Leave the Jellyfin step without connecting and Home, Movies and Shows show the s
 | ↑ and ↓ | Volume |
 | M | Mute |
 | F, or a double click | Full screen |
-| I | What's playing and how (picture, decoder, video, frame rate) |
+| I | What's playing and how (picture, motion, decoder, video, frame rate) |
 | Esc | Leave full screen, or go back |
 
 - **Media keys:** while the player is open, your keyboard's play, pause and next keys work even with another window in front, and Windows' media controls (and Exo Launcher's Now Playing) show what's playing. Closing the player gives the keys back to your music.
@@ -68,6 +68,7 @@ Leave the Jellyfin step without connecting and Home, Movies and Shows show the s
 - **The picture** is picked for your PC as it plays, with no setting: High quality (mpv's high-quality scaling) on a dedicated graphics card on mains power; Balanced on integrated graphics, on battery, and for the rest of a video that keeps dropping frames. Video is decoded on the graphics card, and in software when the card can't decode it. **I** shows which.
 - **Anime upscaling:** on High quality, anime is redrawn by ArtCNN at up to 4K and shrunk back to your screen. Exo Cinema builds it for your graphics card once, in the background, and uses the driver's upscaler until then. **I** shows ArtCNN when it's on.
 - **AI upscaling:** on High quality, an NVIDIA RTX card enlarges a film or show smaller than your screen with RTX Video Super Resolution, when that's on in Exo Launcher's PC > Display (or NVIDIA's own settings). Both step aside while a game runs.
+- **RTX Video HDR:** on High quality, an NVIDIA RTX card turns an SDR film or show into HDR, when RTX Video HDR is on in Exo Launcher's PC > Display (or NVIDIA's own settings). It needs a screen in HDR: one that can show HDR and has it off is switched to HDR for the title, by the same rules as HDR films below. It isn't used for anime under ArtCNN, while a game runs, or for the rest of a video that keeps dropping frames. **I** shows RTX Video HDR when it's on. AMD and Intel cards have no SDR-to-HDR for video that a player can use, so SDR stays SDR there.
 - **HDR for films:** automatic, with no setting. A film or show with an HDR picture turns HDR on for the screen its window is on, when that screen can show HDR and has it off, and no game is running. HDR goes back off when the title ends, or when you close the player or Exo. When the next HDR title, such as the next episode, starts within about ten seconds of the last one ending, HDR stays on through the change so it doesn't flicker. A screen already in HDR, or one without it, is never touched. _Checked in code only._
 - **Buffering:** the player reads ahead as far as memory allows and waits for a few seconds of picture before playing on. If it buffers often, `%LocalAppData%\ExoCinema\app.log` notes each wait with how fast the link was and how fast the video needs it.
 
@@ -76,7 +77,7 @@ Leave the Jellyfin step without connecting and Home, Movies and Shows show the s
 The gear at the top right. Five pages:
 
 - **Account:** your Exo account. Signed out, sign in or create one. Signed in: **Sync now**, **Change password** (other PCs are signed out), **New recovery code** (the old one stops working), **Signed-in PCs**, **Export my data**, **Sign out** and **Delete account**.
-- **Playback:** **Play next episode**.
+- **Playback:** **Play next episode**, and **Smooth motion** (off unless you turn it on): each frame of a film is shown for exactly its share of your screen's refreshes, and the change from one frame to the next is blended over a single refresh, so a 24 fps film pans without the stutter a 60 Hz screen gives it. It doesn't make new frames, so films keep their look rather than taking on the "soap opera" one. The video's speed is nudged by up to 1% to match the screen. It turns off on battery, while a game runs, and for the rest of a video that keeps dropping frames once the picture has gone lighter. **I** shows it as Motion.
 - **Jellyfin:** who you're connected as, and **Sign out**; signed out, the sign-in.
 - **Storage:** the pictures and seek-bar pictures kept on this PC, and **Clear** to empty them.
 - **About:** your version, **Changelog**, **Check for updates**, and **Report a problem**, **Privacy** and **Licenses**. Crash, freeze and error reports are on by default and there is no switch for them; the privacy statement says what each one holds and how long it is kept.

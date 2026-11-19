@@ -69,6 +69,22 @@ public sealed class HdrFilmsTests
         Assert.False(HdrFilms.HdrTitlePlaying(idle, eof, gamma));
 
     [Fact]
+    public void An_SDR_film_turned_HDR_by_RTX_Video_HDR_keeps_the_screen_in_HDR_like_an_HDR_film()
+    {
+        // The next episode is SDR, but RTX Video HDR is turning it into HDR: the hold keeps HDR on for it.
+        var next = HdrFilms.HdrTitlePlaying("no", "no", "bt.1886", sdrToHdr: true);
+        Assert.True(next);
+        Assert.Equal(HdrFilms.HoldStep.Keep, HdrFilms.Hold(next, heldSinceMs: 1_000, nowMs: 3_000));
+        // Without it, an SDR title lets HDR go back off; and an ended or idle one never holds it.
+        Assert.False(HdrFilms.HdrTitlePlaying("no", "no", "bt.1886", sdrToHdr: false));
+        Assert.False(HdrFilms.HdrTitlePlaying("no", "yes", "bt.1886", sdrToHdr: true));
+        Assert.False(HdrFilms.HdrTitlePlaying("yes", "no", "bt.1886", sdrToHdr: true));
+        // The switch itself follows the same rules as for an HDR film: never during a game, never a screen already in HDR.
+        Assert.True(HdrFilms.ShouldSwitchOn(titleIsHdr: true, screenSupportsHdr: true, screenHdrOn: false, gameRunning: false));
+        Assert.False(HdrFilms.ShouldSwitchOn(titleIsHdr: true, screenSupportsHdr: true, screenHdrOn: false, gameRunning: true));
+    }
+
+    [Fact]
     public void Two_HDR_films_in_a_row_with_the_same_gamma_keep_HDR_while_the_next_plays()
     {
         // The first film ended (eof yes, gamma still pq): the hold waits, and nothing is restored at 10 s.

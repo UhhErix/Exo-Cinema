@@ -26,10 +26,11 @@ internal static class HdrFilms
     /// <summary>Whether try number <paramref name="attempt"/> (1 = the first) is still allowed.</summary>
     public static bool HasRetryLeft(int attempt) => attempt >= 1 && attempt <= RestoreAttempts;
 
-    /// <summary>An HDR title is playing now: a file is loaded (mpv not idle), it is not at its end, and its picture is HDR (gamma pq or hlg).
+    /// <summary>An HDR title is playing now: a file is loaded (mpv not idle), it is not at its end, and its picture is HDR (gamma pq or hlg),
+    /// or RTX Video HDR is turning its SDR picture into HDR (<paramref name="sdrToHdr"/>).
     /// Read on each tick of a hold, so a next HDR title keeps HDR on even when mpv reports no change of gamma.</summary>
-    public static bool HdrTitlePlaying(string? idleActive, string? eofReached, string? gamma) =>
-        idleActive == "no" && eofReached == "no" && PictureRules.Hdr(gamma);
+    public static bool HdrTitlePlaying(string? idleActive, string? eofReached, string? gamma, bool sdrToHdr = false) =>
+        idleActive == "no" && eofReached == "no" && (PictureRules.Hdr(gamma) || sdrToHdr);
 
     /// <summary>Whether to switch HDR on now for the title's screen.</summary>
     /// <param name="titleIsHdr">mpv reports an HDR transfer (PQ or HLG; HDR10, HDR10+, HLG and Dolby Vision's base layer).</param>
