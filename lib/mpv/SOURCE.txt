@@ -1,0 +1,4 @@
+libmpv-2.dll: libmpv under LGPL-2.1-or-later (mpv built with -Dgpl=false, FFmpeg without its GPL parts), mpv v0.41.0-1372-g8e5a96fc4,
+FFmpeg N-128212-g17a4a474f, from zhongfly/mpv-winbuild's October 30, 2026 LGPL x86_64 dev build (baseline x86-64, not
+the AVX2-only v3 build): https://github.com/zhongfly/mpv-winbuild/releases
+libmpv-2.dll SHA-256: b195622f980991f14531d73eddc51294710ddc1c0ad3cf8397e3ddd3a92a63a2

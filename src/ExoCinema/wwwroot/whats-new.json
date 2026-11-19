@@ -1,0 +1,527 @@
+[
+  {
+    "version": "1.5.1",
+    "items": [
+      {
+        "icon": "Private",
+        "title": "Updates from Exo only",
+        "detail": "Exo Cinema asks Exo's update address for new versions and nothing else."
+      },
+      {
+        "icon": "Glass",
+        "title": "Smaller updates",
+        "detail": "From here on an update downloads only the files that changed."
+      }
+    ]
+  },
+  {
+    "version": "1.5.0",
+    "items": [
+      {
+        "icon": "Library",
+        "title": "Your Jellyfin server is the library",
+        "detail": "Home, Movies, Shows, search and History come from your server. Sign in once and it's all there."
+      },
+      {
+        "icon": "Home",
+        "title": "What you kept is still here",
+        "detail": "Titles Exo Cinema saved before this version stay in Watchlist and History. Press one to find it on your server."
+      },
+      {
+        "icon": "Play",
+        "title": "No more freezes at Stop or Close",
+        "detail": "A film whose host goes quiet is asked again, and never holds the window."
+      },
+      {
+        "icon": "Private",
+        "title": "Your recovery code, shown in setup",
+        "detail": "A new account's code now appears in the first run, where it was being skipped."
+      },
+      {
+        "icon": "Glass",
+        "title": "Settings in Exo's look",
+        "detail": "A solid black sheet, cleaner forms, and the same sign-in everywhere."
+      }
+    ]
+  },
+  {
+    "version": "1.4.12",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "Your look follows you",
+        "detail": "Glass or Solid and Reduce motion, chosen on one PC, show on the others once you sign in."
+      },
+      {
+        "icon": "Home",
+        "title": "One account sync",
+        "detail": "Your watch history, settings and add-ons sync through your Exo account; the old mailbox sync is off."
+      },
+      {
+        "icon": "Home",
+        "title": "Your account keeps Cinema in step",
+        "detail": "Watch history, watchlist, settings and add-ons follow you to every PC you sign in on."
+      },
+      {
+        "icon": "Home",
+        "title": "Set up with your account",
+        "detail": "Setup asks for your account right after Welcome, and goes on offline if the service can't be reached."
+      }
+    ]
+  },
+  {
+    "version": "1.4.11",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Plays on PCs where it was refused",
+        "detail": "Stream links open over IPv6 first, so a link your Jellyfin server hands out plays on every PC that has IPv6."
+      }
+    ]
+  },
+  {
+    "version": "1.4.10",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Plays when the server's links are refused",
+        "detail": "With your stream add-on in Settings, Exo Cinema asks it from this PC when your Jellyfin server's links won't play here."
+      }
+    ]
+  },
+  {
+    "version": "1.4.9",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Plays from more Jellyfin servers",
+        "detail": "A link the stream host made for your server's connection now plays through the server instead of being refused."
+      },
+      {
+        "icon": "Search",
+        "title": "Faster search",
+        "detail": "Search on a Jellyfin server answers in about a second instead of several."
+      }
+    ]
+  },
+  {
+    "version": "1.4.8",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Fresh stream links",
+        "detail": "Playing a title again asks your add-ons for new links, so one tied to an earlier connection no longer blocks it."
+      },
+      {
+        "icon": "Glass",
+        "title": "A clean close",
+        "detail": "Closing Exo Cinema no longer ends with an error behind the scenes."
+      }
+    ]
+  },
+  {
+    "version": "1.4.7",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "No freeze for the anime upscaler",
+        "detail": "Its first compile waits until nothing plays and pauses when a film starts, so a film never stalls for it."
+      },
+      {
+        "icon": "Play",
+        "title": "The clock keeps time",
+        "detail": "With the controls hidden, the time and the seek bar keep following the film."
+      },
+      {
+        "icon": "Glass",
+        "title": "Anime upscaler from the second start",
+        "detail": "Once compiled, ArtCNN switches on at once for 1080p anime, with no wait."
+      }
+    ]
+  },
+  {
+    "version": "1.4.6",
+    "items": [
+      {
+        "icon": "Home",
+        "title": "Airing soon on Home",
+        "detail": "Signed in to Jellyfin, a row after Next up lists the episodes your server has coming."
+      },
+      {
+        "icon": "Play",
+        "title": "Another version when one won't open",
+        "detail": "If the version Play chose won't open, Exo Cinema tries the next one, without a restart."
+      },
+      {
+        "icon": "Library",
+        "title": "Jellyfin doesn't drop out on a slow answer",
+        "detail": "A slow or dropped answer no longer marks your server offline; Settings says Not answering only when a second try fails too."
+      },
+      {
+        "icon": "Glass",
+        "title": "Crashes and freezes are reported",
+        "detail": "On by default, with no address, title or file name in them. Diagnostics in Settings › About says what's sent."
+      },
+      {
+        "icon": "Glass",
+        "title": "No freeze at the first anime upscale",
+        "detail": "The first upscale compile runs beside the window, which keeps answering while it works."
+      }
+    ]
+  },
+  {
+    "version": "1.4.5",
+    "items": [
+      {
+        "icon": "Home",
+        "title": "Jellyfin at every size",
+        "detail": "The top bar and its buttons answer the first click at any window size, after Maximize and Restore too."
+      },
+      {
+        "icon": "Glass",
+        "title": "Exo Launcher's look",
+        "detail": "The player's controls and Settings match Launcher's buttons, switches and rows."
+      },
+      {
+        "icon": "Library",
+        "title": "Changelog in place of What's New",
+        "detail": "The sheet shows each release's notes, so you can read what changed."
+      },
+      {
+        "icon": "Play",
+        "title": "Smarter buffering",
+        "detail": "Films load ahead, read-ahead follows your free memory and your connection, and Jellyfin picks the version your link can play."
+      },
+      {
+        "icon": "Glass",
+        "title": "HDR for films, by itself",
+        "detail": "A film with an HDR picture turns HDR on for its screen and back off after, with no setting."
+      }
+    ]
+  },
+  {
+    "version": "1.4.4",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "Your Jellyfin server",
+        "detail": "Connect once with your server, name and password, and your library, progress and favorites are all there."
+      }
+    ]
+  },
+  {
+    "version": "1.4.3",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "Exo Launcher's look",
+        "detail": "New icons, Geist everywhere, and Settings' gear at the top right."
+      }
+    ]
+  },
+  {
+    "version": "1.4.2",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Files open straight away",
+        "detail": "A file opened with Exo Cinema starts playing while the rest of the app comes up, and local files read only 10 s ahead."
+      },
+      {
+        "icon": "Play",
+        "title": "Quiet while you watch",
+        "detail": "Hidden player controls stop scheduling animation and video glass work."
+      },
+      {
+        "icon": "Sound",
+        "title": "Reliable player controls",
+        "detail": "Typing and IME input keep their keys, and unusual track language tags no longer break the track menu."
+      }
+    ]
+  },
+  {
+    "version": "1.4.0",
+    "items": [
+      {
+        "icon": "Sound",
+        "title": "Surround as it was mixed",
+        "detail": "With an AV receiver or soundbar on HDMI, Dolby Atmos and DTS:X go to it untouched, height channels and all."
+      },
+      {
+        "icon": "Glass",
+        "title": "Made for your graphics card",
+        "detail": "The picture is chosen for the card you have. A laptop with two chips uses its faster one while plugged in."
+      },
+      {
+        "icon": "Play",
+        "title": "Seeking follows the video",
+        "detail": "The seek bar and the time stay with the picture again, wherever you jump."
+      }
+    ]
+  },
+  {
+    "version": "1.3.0",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "See where you'd jump",
+        "detail": "Hover the seek bar for a picture of that moment. Drag as fast as you like: the bar, the time and the picture stay together."
+      },
+      {
+        "icon": "Glass",
+        "title": "Anime, sharper",
+        "detail": "ArtCNN redraws anime with crisp lines and real texture, at up to 4K and back to your screen."
+      },
+      {
+        "icon": "Library",
+        "title": "The best stream for you",
+        "detail": "Best ranks a stream add-on's streams by their details for your PC and connection. Ask lists them all."
+      },
+      {
+        "icon": "Tracks",
+        "title": "The right audio and subtitles",
+        "detail": "The best recording in the language you'd expect, Japanese for anime, with full subtitles in yours when you need them."
+      },
+      {
+        "icon": "Home",
+        "title": "Your poster in Windows",
+        "detail": "Windows' media controls and Exo Launcher's mini player show what's playing with its poster."
+      }
+    ]
+  },
+  {
+    "version": "1.2.0",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Updates when you open it",
+        "detail": "When a new version is out, Exo Cinema offers it as it opens, with one button. Nothing ever interrupts a film."
+      },
+      {
+        "icon": "Private",
+        "title": "Your add-on link, when you need it",
+        "detail": "Settings keeps a saved add-on link as dots until you click into it, and Copy copies it without showing it."
+      },
+      {
+        "icon": "Glass",
+        "title": "Reduce motion, your way",
+        "detail": "Settings > Look has its own Reduce motion switch. It starts from Windows' setting, then only your choice counts."
+      },
+      {
+        "icon": "Home",
+        "title": "Stays behind your game",
+        "detail": "Exo Cinema no longer comes to the front by itself, when it opens a sheet or leaves full screen with another window in use."
+      }
+    ]
+  },
+  {
+    "version": "1.1.0",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "RTX upscaling without the ripple",
+        "detail": "RTX Video Super Resolution now upscales to exactly the size the video is shown at, so the picture no longer looks wavy or distorted."
+      },
+      {
+        "icon": "Home",
+        "title": "Next to nothing in the background",
+        "detail": "Idle or behind a game, Exo Cinema now uses almost no CPU, and much less memory while minimized. It uses half the CPU while playing, too."
+      },
+      {
+        "icon": "Play",
+        "title": "Pins that stay",
+        "detail": "Updates keep Exo Cinema pinned to Start and the taskbar. If 1.0.8 unpinned it, pin it once more and it stays."
+      },
+      {
+        "icon": "Private",
+        "title": "Notices like Exo Launcher's",
+        "detail": "Messages show at the top right, stack, and wait while you point at them. Motion and timings match Exo Launcher's."
+      }
+    ]
+  },
+  {
+    "version": "1.0.8",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "Media keys and Windows' media controls",
+        "detail": "Your keyboard's play, pause and next keys work even when Exo Cinema isn't in front, and Windows' media controls show what's playing, with its poster."
+      },
+      {
+        "icon": "Home",
+        "title": "In Exo Launcher's Now Playing",
+        "detail": "Exo Launcher can show and steer what Exo Cinema plays. When you close the player, the media keys go back to your music."
+      }
+    ]
+  },
+  {
+    "version": "1.0.7",
+    "items": [
+      {
+        "icon": "Private",
+        "title": "The newest .NET",
+        "detail": "Exo Cinema runs on .NET 10.0.14, with Microsoft's latest fixes."
+      }
+    ]
+  },
+  {
+    "version": "1.0.6",
+    "items": [
+      {
+        "icon": "Private",
+        "title": "Your add-on link stays private",
+        "detail": "Settings shows a saved add-on link as dots, so it never shows up in a screenshot or a stream."
+      },
+      {
+        "icon": "Private",
+        "title": "A log that's safe to share",
+        "detail": "app.log no longer keeps web addresses, keys, titles or your server's name, so you can attach it to a problem report as it is."
+      },
+      {
+        "icon": "Play",
+        "title": "Newer mpv and FFmpeg",
+        "detail": "The player is on the newest builds of mpv and FFmpeg."
+      }
+    ]
+  },
+  {
+    "version": "1.0.5",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "The picture picks itself",
+        "detail": "High quality on a dedicated graphics card, Balanced on integrated graphics or battery, and lighter for a video that starts dropping frames. Picture is gone from Settings."
+      },
+      {
+        "icon": "Play",
+        "title": "Hardware decoding, always",
+        "detail": "Video is decoded on your graphics card, and in software only when the card can't, so its switch is gone too."
+      }
+    ]
+  },
+  {
+    "version": "1.0.4",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "AI upscaling on RTX cards",
+        "detail": "A video smaller than your screen is sharpened by NVIDIA's RTX Video Super Resolution as it plays, when it's on in Exo Launcher's PC > Display."
+      },
+      {
+        "icon": "Play",
+        "title": "Games come first",
+        "detail": "While Exo Launcher has a game running, the upscaler steps aside so the game keeps its graphics card."
+      },
+      {
+        "icon": "Home",
+        "title": "Updates that wait",
+        "detail": "An update waits a few seconds for Exo Cinema's last helpers to close, instead of stopping at \"folder in use\"."
+      }
+    ]
+  },
+  {
+    "version": "1.0.3",
+    "items": [
+      {
+        "icon": "Play",
+        "title": "The best version, every time",
+        "detail": "When your server has a title in more than one version, Play picks the best one for this PC: one it can play as is, in the sharpest picture your graphics card is built for."
+      },
+      {
+        "icon": "Tracks",
+        "title": "Or choose it yourself",
+        "detail": "Settings > Playback > Source on Ask shows every version when you press Play, with its picture, size and sound, the best one marked."
+      }
+    ]
+  },
+  {
+    "version": "1.0.2",
+    "items": [
+      {
+        "icon": "Skip",
+        "title": "Skip where you look",
+        "detail": "Skip intro and Up Next sit at the right of the screen, larger and higher, clear of the controls."
+      },
+      {
+        "icon": "Home",
+        "title": "Rows that page",
+        "detail": "Arrows beside each row's name move it a page at a time, as in Exo Launcher's Store."
+      },
+      {
+        "icon": "Library",
+        "title": "Pictures that lift",
+        "detail": "Point at a poster or an episode and it rises a little toward you, as in Exo Launcher."
+      },
+      {
+        "icon": "Glass",
+        "title": "No white boxes",
+        "detail": "Focus rings show only when you move with Tab, never after a click, and the search field has none."
+      },
+      {
+        "icon": "Play",
+        "title": "Play starts playing",
+        "detail": "A second click on Play no longer lands on the picture and pauses the video as it opens."
+      }
+    ]
+  },
+  {
+    "version": "1.0.1",
+    "items": [
+      {
+        "icon": "Search",
+        "title": "Search answers sooner",
+        "detail": "Search asks your server only for what its list shows, so a large library answers in about a second instead of up to thirteen."
+      },
+      {
+        "icon": "Search",
+        "title": "Search shows it is looking",
+        "detail": "A spinner turns in the field while your server looks, and No matches or the reason shows when nothing comes back."
+      },
+      {
+        "icon": "Glass",
+        "title": "No ring on What's New",
+        "detail": "What's New no longer opens with a white ring around Continue."
+      }
+    ]
+  },
+  {
+    "version": "1.0.0",
+    "items": [
+      {
+        "icon": "Library",
+        "title": "Your Jellyfin library",
+        "detail": "Sign in to your server and everything you watch is here: Home, your libraries, shows by season, and search with Ctrl+K."
+      },
+      {
+        "icon": "Sync",
+        "title": "Progress that follows you",
+        "detail": "Where you stop and what you've watched go back to Jellyfin as you watch, so every Jellyfin app picks up where you left off."
+      },
+      {
+        "icon": "Play",
+        "title": "A native player",
+        "detail": "mpv draws the picture with hardware decoding, HDR and Dolby Vision tone mapping, at the video's own frame rate."
+      },
+      {
+        "icon": "Glass",
+        "title": "Liquid Glass over the picture",
+        "detail": "The controls blur the video under them as it plays, drawn on the graphics card at no cost to playback."
+      },
+      {
+        "icon": "Tracks",
+        "title": "Audio, subtitles and speed",
+        "detail": "One menu at the top right; each show remembers the languages you pick."
+      },
+      {
+        "icon": "Skip",
+        "title": "Skip intro and Up Next",
+        "detail": "Skip openings and credits, and the next episode plays on its own unless you say not now."
+      },
+      {
+        "icon": "Home",
+        "title": "A Home that opens at once",
+        "detail": "Rows and pictures are kept on this PC, so Home draws before your server answers."
+      }
+    ]
+  }
+]

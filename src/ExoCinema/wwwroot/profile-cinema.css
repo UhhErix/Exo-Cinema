@@ -1,0 +1,172 @@
+/* Exo Cinema's own changes to the Profile room's styles (profile.css is Exo Launcher's): the room under Cinema's Bar,
+   Cinema's overlay for its sheets, and the sign-in's ways as Cinema draws them. */
+
+/* ── Exo Cinema: the room fills the window under the Bar (Cinema's other pages scroll the window; this one scrolls
+   itself, as Launcher's rooms do), and Launcher's GameOverlay is Cinema's own overlay below. ── */
+.exo-profile-room {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.exo-profile-room-scroll {
+  padding-top: calc(var(--exo-bar-h) + 12px);
+}
+
+/* A sheet over the room: the scrim (clear for Customize, so the profile shows live beside it) and the sheet on its stage. */
+.exo-game-overlay {
+  position: fixed;
+  inset: calc(var(--exo-bar-h) + 12px) var(--exo-gutter) var(--exo-gutter);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exo-game-overlay[hidden] {
+  display: none;
+}
+
+.exo-game-overlay-scrim {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  background: var(--exo-scrim);
+  animation: scrim-in var(--dur-base) var(--ease-out) backwards;
+}
+
+.exo-game-overlay-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  animation: sheet-in var(--dur-move) var(--ease-out) backwards;
+}
+
+.exo-profile-sheet .set-group h2 {
+  margin: 0 0 8px;
+  color: var(--color-fg);
+  font-size: var(--type-control);
+}
+
+.exo-profile-sheet .set-row {
+  min-height: 56px;
+  border-top: 1px solid var(--exo-float-line);
+}
+
+/* The sign-in's ways on the signed-out page: as wide as the panel, their words centered (Launcher's .is-big). */
+.exo-profile-signin-panel .exo-signin > .set-btn {
+  justify-content: center;
+  height: 40px;
+}
+
+/* A setup block here is the gear alone (the part list is what Exo Launcher reads on its own PC), so no first column is
+   kept wide for it: the gear shares the row evenly. */
+.exo-profile-block .exo-profile-setup:not(:has(> .exo-profile-rig)) {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* Customize's rows are Settings' own (app.css .set-row), as Exo Launcher's are its Settings rows: a name (and the
+   reading under it), the control at the end; a dropdown is a compact button with its chevron. */
+.exo-profile-sheet .exo-set-list { display: grid; }
+.exo-profile-sheet .exo-profile-row { min-height: 44px; gap: 10px; }
+.exo-profile-sheet .exo-profile-row .set-name { display: grid; gap: 2px; min-width: 0; }
+.exo-profile-row-detail { color: var(--color-muted); font-size: var(--type-small); font-weight: 400; }
+.exo-profile-choice { display: inline-flex; align-items: center; gap: 6px; }
+.exo-profile-choice svg, .exo-profile-sheet .set-btn svg { width: 14px; height: 14px; flex: none; }
+.exo-profile-sheet .set-btn:has(svg) { display: inline-flex; align-items: center; gap: 6px; }
+.exo-profile-row > .exo-profile-media-thumb { flex: none; }
+.exo-profile-row .exo-profile-range { display: inline-flex; align-items: center; gap: 10px; }
+.exo-profile-row .exo-profile-range .exo-range { width: 150px; }
+.exo-profile-add-tile svg { width: 20px; height: 20px; }
+
+/* ── The room's opening (profile.js › pOpening): the room loads unseen behind the profile's picture in its accent's
+   ring, then comes in whole as the picture grows away. ── */
+.exo-profile-room.is-preparing .exo-profile-stage { visibility: hidden; }
+
+.exo-profile-opening {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+  pointer-events: none;
+  animation: exo-profile-opening-in var(--dur-base) var(--ease-out) both;
+}
+
+.exo-profile-opening.is-quiet { animation: none; }
+.exo-profile-opening.is-quiet .exo-profile-opening-mark { visibility: hidden; animation: none; }
+
+.exo-profile-opening.is-leaving { animation: exo-profile-opening-out 420ms var(--ease-out) both; }
+
+.exo-profile-opening-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  animation: exo-profile-opening-settle var(--dur-flight) var(--ease-spring) both;
+}
+
+.exo-profile-opening.is-leaving .exo-profile-opening-mark { animation: exo-profile-opening-away 420ms var(--ease-out) both; }
+
+.exo-profile-opening-mark > img,
+.exo-profile-opening-letter {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.exo-profile-opening-letter {
+  display: grid;
+  place-items: center;
+  background: var(--exo-tile);
+  font-size: 48px;
+  font-weight: 700;
+}
+
+/* The ring: the accent sweeping round the picture while the room loads. */
+.exo-profile-opening-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from var(--ring-turn, 0deg), transparent 0deg, var(--profile-accent) 140deg, transparent 300deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--profile-accent) 60%, transparent));
+  animation: exo-profile-opening-turn 1100ms linear infinite;
+}
+
+@property --ring-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes exo-profile-opening-turn { to { --ring-turn: 360deg; } }
+@keyframes exo-profile-opening-in { from { opacity: 0; } }
+@keyframes exo-profile-opening-out { to { opacity: 0; } }
+@keyframes exo-profile-opening-settle { from { opacity: 0; transform: translateY(8px) scale(0.92); } }
+@keyframes exo-profile-opening-away { to { opacity: 0; transform: scale(1.18); } }
+
+:root[data-exo-motion="reduce"] .exo-profile-opening,
+:root[data-exo-motion="reduce"] .exo-profile-opening * { animation: none !important; }
+:root[data-exo-motion="reduce"] .exo-profile-opening.is-leaving { opacity: 0; }
+
+/* The page's buttons sit over the banner, whatever the person made it: the deeper dim of Exo's badges over art, as
+   Exo Launcher's glass.css lists them (its badges-over-art list), so their words read over a white banner. Exo
+   Launcher's profile.css gives the white one its hairline. Solid (Settings › Look) has no glass: its plain dark fill. */
+.exo-profile-page-actions .set-btn:not(.is-primary) {
+  background: transparent;
+  backdrop-filter: blur(10px) brightness(0.34) contrast(0.9) saturate(1.6);
+  box-shadow: none;
+  text-shadow: none;
+}
+
+:root[data-material="solid"] .exo-profile-page-actions .set-btn:not(.is-primary) {
+  background: var(--exo-solid-fill);
+  backdrop-filter: none;
+}
+
+/* Customize's two tabs are Settings' segmented capsule, the one open lit. */
+.exo-profile-sheet .exo-profile-tabs.segmented { display: inline-flex; }
+
+/* An error under the row whose control caused it (profile.js › pPlaceError), on the row's own edge. */
+:is(.set-row, .exo-actions, .exo-profile-form) + .exo-profile-sheet-error { margin: 4px 0 8px; }

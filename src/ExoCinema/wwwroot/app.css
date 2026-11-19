@@ -1,0 +1,1718 @@
+/* Exo Cinema's library, held to Exo Launcher (its DESIGN.md, tokens.css, system.css, shelf.css, library.css): the art
+   is the picture, the page is black, everything that floats or acts is Liquid Glass (glass.css). Type is 20 / 13 / 12,
+   controls 13px Medium, section names the only 600, titles 650; no letter-spacing. Radii: cards
+   and menus 14, panels and featured art 18, sheets 24, pills 999. Art has no ring of its own. Nothing grows on hover. */
+
+/* Exo's type, as Exo Launcher's fonts.css: Geist (SIL OFL 1.1, fonts/LICENSE-Geist.txt), the variable fonts, upright and italic. */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-display: block;
+  font-weight: 100 900;
+  src: url("fonts/Geist-Variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist";
+  font-style: italic;
+  font-display: block;
+  font-weight: 100 900;
+  src: url("fonts/Geist-Italic-Variable.woff2") format("woff2");
+}
+
+/* Motion, as Exo Launcher's tokens.css (DESIGN.md › Motion): two curves (out for appear, fade and state; the spring for
+   travel and shape), linear only for progress, and these times only. In-out is for loops. */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-spring: linear(0, 0.005 1.8%, 0.018 3.7%, 0.04 5.7%, 0.074 8%, 0.111 10.2%, 0.156 12.5%, 0.437 25.8%,
+    0.512 29.7%, 0.576 33.2%, 0.645 37.3%, 0.703 41.3%, 0.756 45.5%, 0.803 49.8%, 0.846 54.5%, 0.883 59.5%,
+    0.913 64.7%, 0.939 70.3%, 0.958 76%, 0.973 82%, 0.986 90.2%, 0.995 99.8%, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 90ms;
+  --dur-quick: 120ms;
+  --dur-base: 160ms;
+  --dur-move: 220ms;
+  --dur-flight: 300ms;
+  --dur-arrive: 280ms;
+  --dur-hold: 3000ms;
+  --exo-gap: 10px;
+  --exo-gutter: var(--exo-gap);
+  --exo-bar-h: 52px;
+  --type-title: 20px;
+  --type-control: 13px;
+  --type-small: 12px;
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: "Geist", sans-serif;
+  font-size: var(--type-control);
+  font-synthesis: none;
+  font-kerning: normal;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+body { overflow-x: hidden; }
+body.mode-player { overflow: hidden; user-select: none; }
+
+button, input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: normal;
+  padding: 0;
+}
+
+a { color: inherit; text-decoration: none; cursor: pointer; }
+
+/* Keyboard focus: a 2px ring in the ink. Fields draw theirs inside their edge (below); art gets it 2px outside. */
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+
+/* Rings are for moving with Tab only (icons.js sets is-tabbing): with the mouse, nothing wears one, inside glass,
+   on a field or on a card's picture. */
+:root:not(.is-tabbing) :focus-visible,
+:root:not(.is-tabbing) :focus-visible * { outline: none !important; }
+
+svg { display: block; width: 16px; height: 16px; flex: none; }
+
+img { display: block; }
+
+/* ── The Bar ─────────────────────────────────────────────────────────────────────────────────────────────────────
+   One row of 36px capsules, 8px from the top and 10px from the window's sides, 10px apart: Search, the libraries
+   centered in what is left, and Tools with the window controls after a hairline. */
+
+/* Over a sheet's dim (.settings-back, 40): the dim reaches under the Bar, so the art behind it dims with the room
+   instead of stopping at the Bar's edge, and the Bar stays live (DESIGN.md › Motion › Appear). */
+.bar {
+  position: fixed;
+  top: 8px;
+  left: var(--exo-gap);
+  right: var(--exo-gap);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: var(--exo-gap);
+  height: 36px;
+}
+
+.bar > * { flex: none; }
+
+.bar-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  height: 36px;
+  padding: 0 12px 0 10px;
+  border-radius: 999px;
+  color: var(--color-fg);
+  font-size: calc(13px * var(--exo-scale, 1));
+  transition: background-color var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+.bar-search .bar-mark { width: 18px; height: 18px; }
+.bar-search span { flex: 1; text-align: left; }
+
+.rooms {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 3px;
+  margin: 0 auto;
+  border-radius: 999px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: var(--color-fg);
+  font-size: var(--type-control);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+/* Room tab icons: quiet at rest, full on the current room (Launcher's icons.css). */
+.tab svg { opacity: 0.85; }
+
+/* The current one: Exo's selected fill with the glass's one thin line; its glyph solid. */
+.tab.is-on { background: var(--exo-selected); box-shadow: var(--glassy-ring); }
+.tab.is-on svg { opacity: 1; }
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+  padding: 0 3px;
+  border-radius: 999px;
+}
+
+.window-controls { display: contents; }
+
+.divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 3px;
+  flex: none;
+  background: var(--exo-selected);
+}
+
+/* Gear and window controls share the tab's height and pill (Exo's shelf.css). */
+.tool-btn,
+.exo-winbtn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  transition: color var(--dur-quick) var(--ease-out), background-color var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+.tool-btn.is-on { color: var(--color-fg); background: var(--exo-selected); }
+
+@media (hover: hover) and (pointer: fine) {
+  .bar-search:hover, .tab:hover:not(.is-on), .tool-btn:hover, .exo-winbtn:hover, .exo-winbtn.is-hover { background: var(--hover-fill); color: var(--color-fg); }
+  .exo-winbtn.is-close:hover { color: var(--color-bad); }
+}
+
+.exo-winbtn.is-hover { background: var(--hover-fill); color: var(--color-fg); }
+
+:is(.bar-search, .tab, .tool-btn, .exo-winbtn, .primary, .secondary, .card, .episode, .palette-row):active { scale: 0.97; transition-duration: var(--dur-press); }
+
+/* The Bar compacts in steps, as Exo Launcher's system.css: Search to its mark under 1800px, the room names under 1040px
+   (kept for screen readers), and the gaps and tools close up under 600px. */
+@media (max-width: 1800px) {
+  .bar-search { width: 36px; padding: 0 9px; }
+  .bar-search span { display: none; }
+}
+
+@media (max-width: 1040px) {
+  .tab { gap: 0; padding: 0 10px; }
+  .tab span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
+@media (max-width: 600px) {
+  .bar { gap: 6px; }
+  .rooms { gap: 0; }
+  .tab { padding: 0 8px; }
+  .tool-btn, .exo-winbtn { width: 28px; }
+}
+
+/* ── Menus (large glass) ──────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Menus grow from their trigger (transform-origin on each), 0.96 to 1, and fade, as glass that floats alone may.
+   Sheets and dialogs settle in from 0.98 by their size alone, over a scrim that darkens in by its color: glass under a
+   fading parent sees nothing behind it and pops to glass as the fade ends (DESIGN.md › Motion › Appear). */
+@keyframes menu-in { from { opacity: 0; scale: 0.96; } }
+@keyframes sheet-in { from { scale: 0.98; } }
+@keyframes scrim-in { from { background-color: transparent; } }
+
+.menu-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: var(--type-control);
+  font-weight: 500;
+  text-align: left;
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+
+.menu-row:hover, .palette-row:hover, .source-row:hover { transition-duration: 0s; }
+.menu-row:hover { background: var(--hover-fill); }
+/* Exo Launcher's menu item (system.css): the pressed fill, the step past the hover. */
+.menu-row:active:not(:disabled) { background: var(--exo-pressed); }
+
+/* A control asking its question in place (icons.js › confirmInPlace): one line while its width springs, its words in
+   Bad when what it asks can't be taken back. */
+.is-armed { white-space: nowrap; overflow: hidden; }
+.is-armed.is-danger, .is-armed.is-danger svg { color: var(--color-bad); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.menu-row svg { color: var(--color-muted); }
+.menu-row:focus-visible { outline-offset: -2px; }
+
+/* ── Hero: a title's backdrop, full bleed; the words sit on its darkened lower left ──────────────────────────────── */
+
+.hero {
+  position: relative;
+  min-height: min(72vh, 760px);
+  display: flex;
+  align-items: flex-end;
+  padding: 120px 24px 36px;
+  overflow: hidden;
+}
+
+.hero.is-title { min-height: min(80vh, 860px); }
+
+.hero-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 22%;
+  z-index: 0;
+  animation: art-in var(--dur-flight) var(--ease-out);
+}
+
+/* The page's black rises over the art toward the bottom and the left, under the words, so they keep 4.5:1 over any
+   picture; the art itself is never dimmed elsewhere. */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to top, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 72%, transparent) 22%, transparent 58%),
+    linear-gradient(to right, color-mix(in srgb, var(--color-bg) 78%, transparent) 0%, color-mix(in srgb, var(--color-bg) 35%, transparent) 38%, transparent 64%);
+}
+
+/* On Light the hero is still media: its art keeps a dark shade under white words (a title's logo is drawn white for a
+   dark picture, and on a light fade it vanished), and the art simply ends where the page begins. */
+:root[data-exo-theme="light"] .hero {
+  color-scheme: dark;
+  --color-fg: #ffffff;
+  --color-muted: #dbdbdb;
+  --color-primary-fg: #000000;
+  --exo-primary-hover: #e8e8e8;
+  --exo-ink-rgb: 255 255 255;
+  --hover-fill: rgb(255 255 255 / 0.1);
+  --exo-fill: transparent;
+  --exo-control-glass: blur(10px) brightness(0.62) saturate(1.8);
+  --glassy-ring: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  --exo-rim: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  --exo-glass-rim: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  --exo-rim-pressed: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  --glassy-words: 0 1px 2px rgb(0 0 0 / 0.45);
+  color: var(--color-fg);
+}
+
+:root[data-exo-theme="light"] .hero::after {
+  background:
+    linear-gradient(to top, rgb(0 0 0 / 0.78) 0%, rgb(0 0 0 / 0.5) 22%, transparent 58%),
+    linear-gradient(to right, rgb(0 0 0 / 0.72) 0%, rgb(0 0 0 / 0.3) 38%, transparent 64%);
+}
+
+@keyframes art-in { from { opacity: 0; } }
+
+.hero-body {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hero-logo {
+  max-width: min(400px, 70vw);
+  max-height: 150px;
+  object-fit: contain;
+  object-position: left bottom;
+  margin-bottom: 6px;
+}
+
+.hero-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.hero-meta, .hero-genres {
+  margin: 0;
+  font-size: var(--type-control);
+  font-weight: 500;
+}
+
+.hero-genres { color: var(--color-muted); }
+
+.overview {
+  margin: 6px 0 0;
+  max-width: 560px;
+  font-size: var(--type-control);
+  line-height: 1.55;
+  color: rgb(var(--exo-ink-rgb) / 0.86);
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* One primary per view: the ink's color, black words (Exo's primary on Void). The rest are glass over the art. */
+.primary, .secondary {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: var(--type-control);
+  font-weight: 600;
+  transition: background-color var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+.primary {
+  background: var(--color-fg);
+  color: var(--color-primary-fg);
+}
+
+.primary:hover { background: var(--exo-primary-hover); }
+.primary:disabled { opacity: 0.4; cursor: default; }
+/* The glass button beside it (Exo's raised control): the hover lift, and the pressed fill it gives way to. */
+@media (hover: hover) and (pointer: fine) {
+  .secondary:hover:not(:disabled) { background-color: var(--hover-fill); }
+}
+.secondary:active:not(:disabled) { background-color: var(--exo-pressed); box-shadow: var(--exo-rim-pressed); }
+.primary svg { width: 15px; height: 15px; }
+.secondary svg { width: 16px; height: 16px; }
+.secondary.is-on svg { color: var(--color-fg); }
+/* Choose version: the chevron right after Play, a square of its own. */
+.secondary.icon-only { width: 44px; padding: 0; margin-left: -4px; }
+/* A rating's star sits in the line at the text's size. */
+.rating { display: inline-flex; align-items: center; gap: 4px; vertical-align: -2px; }
+.rating svg { width: 12px; height: 12px; }
+.secondary:not(.is-on) svg { color: var(--color-muted); }
+
+.wide { width: 100%; }
+
+/* ── Shelves ──────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.shelves { padding: 4px 0 56px; }
+.home-hero:empty + .shelves { padding-top: calc(var(--exo-bar-h) + 20px); }
+
+.shelf { margin-top: 26px; }
+
+/* The shelf's name, and at its end the arrows that page it, as Exo Launcher's Store rows (store.css). */
+.shelf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 var(--exo-gutter) 8px;
+}
+
+.shelf h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--type-title);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shelf-arrows { display: inline-flex; gap: 4px; flex: none; }
+/* On the page, a raised control is small glass (DESIGN.md › Grammar › Controls), not a gray pill. */
+.shelf-arrows .set-btn { width: 32px; padding: 0; display: grid; place-items: center; background-color: var(--exo-fill); box-shadow: var(--exo-rim); }
+.shelf-arrows svg { width: 14px; height: 14px; }
+
+/* A row that fits whole has nothing to page: no arrows, rather than two dead ones. */
+.shelf-arrows:not(:has(button:enabled)) { visibility: hidden; }
+
+/* A row scrolls sideways and so clips: 8px above holds a card's lift. */
+.row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px var(--exo-gutter) 6px;
+  scroll-padding: 0 var(--exo-gutter);
+  scroll-snap-type: x proximity;
+}
+
+.card {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  scroll-snap-align: start;
+  transition: scale var(--dur-quick) var(--ease-out);
+}
+
+.card.wide { width: 300px; }
+.card.poster { width: 160px; }
+.card.is-placeholder { pointer-events: none; }
+
+.art {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--exo-card-radius);
+  margin-bottom: 8px;
+}
+
+.art:not(:has(img), .exo-skeleton) { background: var(--exo-tile); }
+
+.card.wide .art { aspect-ratio: 16 / 9; }
+.card.poster .art { aspect-ratio: 2 / 3; }
+
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: img-in var(--dur-move) var(--ease-out);
+}
+
+@keyframes img-in { from { opacity: 0; } }
+
+/* Hover, as Exo Launcher's covers (its home.css and store.css): the art lifts 3px toward you and takes a little
+   light of its own. It never grows (a growing layer draws soft until it stops) and gets no ring; the light is the
+   art's own brightness, so its blacks stay black. */
+.art { transition: transform var(--dur-move) var(--ease-out); }
+.art img { transition: filter var(--dur-quick) var(--ease-out); }
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.card, .episode):hover .art { transform: translateY(-3px); }
+  :is(.card, .episode):hover .art img { filter: brightness(1.08); }
+}
+
+:root[data-exo-motion="reduce"] :is(.card, .episode):hover .art { transform: none; }
+
+.card:focus-visible, .episode:focus-visible { outline: none; }
+:is(.card, .episode):focus-visible .art { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+
+.art-name {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.progress {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-fg);
+}
+
+.watched {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.watched svg { width: 14px; height: 14px; }
+
+.card-title {
+  font-size: var(--type-control);
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.card-sub {
+  color: var(--color-muted);
+  font-size: var(--type-small);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-height: 1.3em;
+}
+
+/* ── Library grid ─────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.grid-page { padding: calc(var(--exo-bar-h) + 20px) var(--exo-gutter) 56px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 22px 12px;
+}
+
+.grid .card.poster, .grid .card.wide { width: auto; }
+
+/* Off the screen, a shelf and a grid's cards skip their style, layout and paint; their size is kept so the page doesn't
+   jump (the browser remembers each one's last size once drawn). */
+.shelf { content-visibility: auto; contain-intrinsic-size: auto 340px; }
+.grid .card { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+
+/* History (Exo Watch): each day under its name, the newest first, as a grid of what was watched that day. */
+.grid.is-wide { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+/* Movies and Shows: the lists as tabs, the genre as a menu beside them, and the grid's next page under it. */
+.browse-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; }
+.browse-head .seasons { margin-bottom: 18px; }
+.genre-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; }
+.genre-btn svg { width: 16px; height: 16px; }
+.grid-more { display: grid; place-items: center; padding: 28px 0; }
+.grid-more[hidden] { display: none; }
+
+/* A picture no host had: its place stays, empty. */
+.art img.is-missing { visibility: hidden; }
+.episode:disabled { cursor: default; opacity: 0.6; }
+.day-head { margin: 30px 0 10px; font-size: var(--type-title); font-weight: 600; }
+.day-head:first-child { margin-top: 0; }
+
+/* A title the library doesn't hold: its name only, nothing to press. */
+/* One kept from before 1.5: its name in place of a picture. Pressing it looks the name up on the server. */
+.card.is-away .art { display: grid; place-items: center; }
+
+/* The Jellyfin sign-in, which is every room while no server is signed in to: a column in the middle of the page's own
+   black, the same form as Settings › Jellyfin. */
+
+
+/* ── A title's seasons and episodes ───────────────────────────────────────────────────────────────────────────── */
+
+.episodes { padding: 0 var(--exo-gutter) 56px; }
+
+/* Seasons: a segmented capsule like the Bar's libraries. */
+.seasons {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 2px;
+  padding: 3px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  overflow-x: auto;
+}
+
+.seasons .tab { font-weight: 500; }
+
+.episode-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episode {
+  width: 100%;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 18px;
+  text-align: left;
+  transition: background-color var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+.episode:hover { background: var(--hover-fill); }
+
+/* Marks a server's episode watched: beside the row, in sight while the row is hovered, focused or marked. */
+.episode-list li { position: relative; }
+.episode-mark { position: absolute; top: 50%; right: 16px; translate: 0 -50%; margin: 0; z-index: 1; opacity: 0; transition: opacity var(--dur-quick) var(--ease-out); }
+.episode-mark svg { width: 16px; height: 16px; }
+.episode-list li:hover .episode-mark, .episode-mark:focus-visible, .episode-mark.is-on { opacity: 1; }
+.episode-list li:has(.episode-mark) .episode-body { padding-right: 60px; }
+
+.episode .art {
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  flex: none;
+  margin: 0;
+}
+
+.episode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 720px;
+}
+
+.episode-title { font-size: var(--type-control); font-weight: 600; }
+.episode-meta { color: var(--color-muted); font-size: var(--type-small); }
+
+.episode-overview {
+  color: var(--color-muted);
+  font-size: var(--type-small);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── States ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.loading {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+}
+
+.loading .spinner { position: static; margin: 0; }
+
+/* Waits that aren't a measure, as Exo Launcher's waits.css: a skeleton is the clear card it will be, shining; each shows
+   only once the wait is real (300 ms), pauses in the background and holds still under Reduce motion. */
+.exo-skeleton {
+  border-radius: var(--exo-card-radius);
+  background: rgb(var(--exo-ink-rgb) / 0.05);
+  box-shadow: inset 0 0 0 1px rgb(var(--exo-ink-rgb) / 0.06);
+}
+
+.exo-shine { position: relative; overflow: hidden; isolation: isolate; }
+
+.exo-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 4;
+  width: 250%;
+  background: linear-gradient(110deg, transparent 32%, rgb(var(--exo-ink-rgb) / 0.07) 44%, rgb(var(--exo-ink-rgb) / 0.16) 50%,
+    rgb(var(--exo-ink-rgb) / 0.07) 56%, transparent 68%);
+  animation: exo-shine 1.6s linear infinite, exo-wait-in var(--dur-base) var(--ease-out) 300ms backwards;
+  pointer-events: none;
+}
+
+@keyframes exo-shine { from { translate: -60% 0; } to { translate: 0 0; } }
+@keyframes exo-wait-in { from { opacity: 0; } }
+
+:root[data-exo-motion="reduce"] .exo-shine::after { width: 100%; background: rgb(var(--exo-ink-rgb) / 0.05); animation: none !important; }
+html[data-exo-inactive="true"] .exo-shine::after { animation-play-state: paused !important; }
+@media (forced-colors: active) { .exo-shine::after { display: none; } }
+
+.wait-title { padding: calc(var(--exo-bar-h) + 10px) var(--exo-gutter) 0; }
+.wait-hero { display: block; height: min(64vh, 700px); }
+
+.problem, .empty-words {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 var(--exo-gutter);
+}
+
+.problem p { margin: 0; color: var(--color-bad); }
+
+/* Notices, as Exo Launcher's (its dialog.css › .exo-notices): top right under the bar, newest last, each in from
+   just above and out the same way. They stay 4.5 s and hold while the pointer is on them (app.js › toast). */
+.notices {
+  position: fixed;
+  top: calc(var(--exo-bar-h) + var(--exo-gap));
+  right: var(--exo-gap);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(380px, calc(100vw - var(--exo-gap) * 2));
+  pointer-events: none;
+}
+
+.notice {
+  padding: 12px;
+  border-radius: 18px;
+  font-size: var(--type-control);
+  pointer-events: auto;
+  animation: notice-in var(--dur-move) var(--ease-out) backwards;
+  transition: opacity var(--dur-base) var(--ease-out), translate var(--dur-move) var(--ease-out);
+}
+
+.notice { display: flex; align-items: flex-start; gap: 8px; }
+.notice-words { flex: 1; min-width: 0; padding: 4px 0 0 4px; }
+.notice.is-bad .notice-words { color: var(--color-bad); }
+.notice-close { display: grid; place-items: center; width: 24px; height: 24px; flex: none; border-radius: 999px; color: var(--color-muted); }
+.notice-close:hover { background: var(--hover-fill); color: var(--color-fg); }
+.notice.is-leaving { opacity: 0; translate: 0 -4px; pointer-events: none; }
+
+@keyframes notice-in { from { opacity: 0; translate: 0 -8px; } }
+
+/* ── Ctrl+K ───────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.palette-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--exo-scrim);
+  animation: scrim-in var(--dur-base) var(--ease-out) backwards;
+}
+
+.palette-panel {
+  position: relative;
+  width: min(620px, calc(100vw - 2 * var(--exo-gutter)));
+  max-height: 64vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  overflow: hidden;
+  animation: sheet-in var(--dur-base) var(--ease-out);
+}
+
+/* The panel's own field: no ring of its own, it is the panel's head. */
+.palette-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  padding: 0 18px;
+  flex: none;
+}
+
+.palette-field svg { width: 18px; height: 18px; color: var(--color-muted); }
+
+/* Searching: a small spinner at the field's end. */
+.palette-field::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex: none;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--exo-ink-rgb) / 0.2);
+  border-top-color: var(--color-fg);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.palette.is-searching .palette-field::after { opacity: 1; animation: spin 800ms linear infinite; }
+
+.palette-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: none;
+  background: none;
+  font-size: var(--type-control);
+}
+
+/* Glass rings whatever is focused inside it (glass.css); the field is the panel's head and never rings. */
+.palette-field input:focus-visible { outline: none; }
+.palette-field input::placeholder { color: var(--color-muted); }
+.palette-field input::-webkit-search-cancel-button { display: none; }
+
+.palette-results {
+  overflow-y: auto;
+  padding: 0 6px 6px;
+}
+
+.palette-results:not(:empty) { border-top: 1px solid rgb(var(--exo-ink-rgb) / 0.1); padding-top: 6px; }
+
+.palette-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+
+.palette-row:hover, .palette-row.is-on { background: var(--hover-fill); }
+.palette-row.is-on { background: var(--exo-selected); }
+
+.palette-art {
+  width: 32px;
+  height: 48px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 6px;
+  background: rgb(var(--exo-ink-rgb) / 0.06);
+}
+
+.palette-art img { width: 100%; height: 100%; object-fit: cover; }
+
+.palette-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.palette-name { font-size: var(--type-control); font-weight: 500; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.palette-sub { font-size: var(--type-small); color: var(--color-muted); }
+.palette-note { margin: 0; padding: 12px 10px; color: var(--color-muted); font-size: var(--type-control); }
+.palette-note.is-bad { color: var(--color-bad); }
+
+/* What's New takes the focus itself, so no button wears the keyboard ring before anything is pressed. */
+.whats-new-sheet:is(:focus, :focus-visible) { outline: none; }
+
+/* ── The window controls over a sheet of its own (What's New, the update offer) ───────────────────────────────── */
+
+.signin-bar {
+  position: fixed;
+  top: 8px;
+  right: var(--exo-gap);
+  display: flex;
+}
+
+/* Exo's field: a 36px clear capsule with its one line; in use, the 2px ring inside its edge. */
+.exo-field {
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  outline: none;
+  background-color: var(--exo-fill);
+  backdrop-filter: var(--exo-control-glass);
+  box-shadow: var(--exo-field-rim);
+  color: var(--color-fg);
+  font-size: var(--type-control);
+}
+
+.exo-field:focus-visible { outline: 2px solid var(--color-fg); outline-offset: -2px; }
+.exo-field::placeholder { color: var(--color-muted); }
+
+.set-actions .set-btn.is-compact { padding: 0 8px; }
+.set-actions .set-btn.is-compact svg { width: 16px; height: 16px; }
+
+/* An import in Settings: its boxes beside its name, then its buttons; Quick Connect's code large enough to read off. */
+.import-row .import-fields { display: flex; gap: 8px; flex: 3 1 0%; justify-content: flex-end; flex-wrap: wrap; }
+.import-row .exo-field { flex: 1 1 0%; min-width: 140px; max-width: 240px; }
+.import-actions .set-value { flex: 1; }
+.import-code { margin-left: auto; font-size: var(--type-title); font-weight: 600; font-variant-numeric: tabular-nums; user-select: text; }
+
+.form-error { margin: 0; color: var(--color-bad); font-size: var(--type-control); }
+/* A failure in a settings section sits 8px under its row, its line at 1.4 (Exo Launcher's .exo-set-error). */
+.settings-sheet .form-error { margin: 8px 0 0; line-height: 1.4; }
+.press-error { margin-top: 10px; }
+
+/* Streamer Mode (window.js): an email typed while streaming software is open stays dots, even while it's typed. */
+:root[data-exo-streaming="true"] :is(#exoEmail, [data-import-field="email"], [data-jellyfin-field="server"], [data-jellyfin-field="name"]) { -webkit-text-security: disc; }
+
+@media (max-width: 900px) {
+  .episode .art { width: 150px; }
+}
+
+/* Reduce motion (Settings › Look, the app's own switch, not Windows'): nothing slides, grows, springs or loops;
+   things only fade, once. */
+:root[data-exo-motion="reduce"] *,
+:root[data-exo-motion="reduce"] *::before,
+:root[data-exo-motion="reduce"] *::after {
+  transition-property: opacity !important;
+  animation-name: art-in !important;
+  animation-iteration-count: 1 !important;
+}
+
+:root[data-exo-motion="reduce"] :active { scale: none !important; }
+:root[data-exo-motion="reduce"] :is(.menu, .sources-menu, .track-menu, .notice, .palette-panel, .palette-scrim) { animation: none !important; }
+
+/* Loops pause while Exo Cinema is in the background (not the focused window, or hidden), as Exo Launcher's do
+   (its tokens.css): a spinner or the busy bar costs nothing behind a game. Each pseudo-element is its own selector,
+   as one inside :is() is dropped. */
+html[data-exo-inactive="true"] .spinner,
+html[data-exo-inactive="true"] .palette.is-searching .palette-field::after,
+html[data-exo-inactive="true"] .mini-bar.is-busy span,
+html[data-exo-inactive="true"] .exo-profile-opening-ring {
+  animation-play-state: paused !important;
+}
+
+/* ── Profile button: the user's picture in Tools ──────────────────────────────────────────────────────────────── */
+
+/* The profile circle at the tools pill's end is concentric with it, as Exo Launcher's: the button is the 30 px circle
+   itself, so it sits 3 px from the pill's end as from its top and bottom. */
+.profile-btn { width: 30px; padding: 0; }
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: var(--color-fg);
+}
+
+/* ── Settings ─────────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* A sheet over the room it was opened from, as Exo Launcher's (game-b.css › .exo-set-room), over the room dimmed
+   to the window's top (the Bar stays live over the dim), settling in by its size. A sidebar of pages, then the page it
+   names (the same sheet as Exo Launcher's and Exo Browser's Settings): 1160px wide and 880 tall at most, 24px round.
+   Its glass is a layer under the content (.sheet-glass), so its words are large glass's and its controls glass of their
+   own. Rows as Exo's (DESIGN.md › Grammar › Rows): the label left, the control on a shared right edge, one hairline
+   above, 62px at least. */
+.settings-back {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  /* One row the dim's own height, so a sheet's max-height can resolve against it (an auto row grew to the content). */
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  padding: calc(var(--exo-bar-h) + 24px) 24px 24px;
+  background: var(--exo-scrim);
+  animation: scrim-in var(--dur-base) var(--ease-out) backwards;
+}
+
+.settings-sheet {
+  --color-fg: var(--exo-panel-ink);
+  --color-muted: var(--exo-glass-panel-secondary);
+  --color-faint: var(--exo-glass-panel-secondary);
+  --hover-fill: rgb(var(--exo-ink-rgb) / 0.07);
+  --exo-selected: rgb(var(--exo-ink-rgb) / 0.1);
+  --exo-pressed: rgb(var(--exo-ink-rgb) / 0.14);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: row;
+  width: min(calc(1160px * var(--exo-scale, 1)), 100%);
+  height: min(calc(880px * var(--exo-scale, 1)), 100%);
+  border-radius: 24px;
+  color: var(--color-fg);
+  outline: none;
+  overflow: hidden;
+  animation: sheet-in var(--dur-move) var(--ease-out) backwards;
+}
+
+.sheet-glass {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* The sidebar (Exo Launcher's .exo-settings-nav): its title, then a row per page, one hairline beside the page. */
+.settings-nav {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 12px;
+  width: calc(232px * var(--exo-scale, 1));
+  padding: 20px 12px;
+  overflow-y: auto;
+  border-right: 1px solid var(--exo-float-line);
+}
+
+.settings-nav-title {
+  margin: 0;
+  padding: 0 12px;
+  color: var(--color-fg);
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 650;
+}
+
+.settings-nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-nav button {
+  width: 100%;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: var(--color-fg);
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 500;
+  text-align: left;
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+
+.settings-nav button[aria-current="page"] { background: var(--exo-selected); font-weight: 600; }
+
+@media (hover: hover) and (pointer: fine) {
+  .settings-nav button:hover:not([aria-current]) { background: var(--hover-fill); }
+}
+
+.settings-nav button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: -2px; }
+
+/* The page: its title level with the sidebar's, the close at its top right, and the page itself scrolling under it. */
+.settings-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.settings-title {
+  margin: 0;
+  padding: 20px 64px 0 32px;
+  color: var(--color-fg);
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 650;
+}
+
+.settings-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  width: 28px;
+  padding: 0;
+}
+
+.settings-scroll {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 18px 32px 32px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* A short fade where the sheet scrolls on: the last row stops above it. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+}
+
+.settings-sheet .set-group { flex: none; padding: 0; }
+/* A section's title (Exo Launcher's .exo-set-section-head): 13px Semibold on a 32px line, 8px over its rows. */
+.settings-sheet .set-group h2 { display: flex; align-items: center; min-height: 32px; margin: 0 0 8px; color: var(--color-fg); font-size: var(--type-control); font-weight: 600; }
+/* A row's hairline is the floating layer's line (Launcher's .exo-set-item), not a tint of the ink. */
+.settings-sheet .set-row { min-height: 62px; border-top: 1px solid var(--exo-float-line); }
+
+/* A row's second line (Exo Browser's rows): what the action does, 12px muted under the label. */
+.settings-sheet .set-name small,
+.set-name small { display: block; margin-top: 2px; color: var(--color-muted); font-size: var(--type-small); font-weight: 400; line-height: 1.35; white-space: normal; }
+
+/* A form opened by a row (Exo Browser's exb-account-sub): under the row, inside its section. */
+.set-sub { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 16px; }
+
+.acct-field { display: flex; flex-direction: column; gap: 6px; }
+.acct-field > span { color: var(--color-muted); font-size: var(--type-small); }
+
+/* The state at a row's right (This PC): the green a running state takes. */
+.set-state { color: var(--color-good); font-size: var(--type-control); }
+
+/* ── Settings › Account (app.js; Exo Launcher's AccountSection) ── */
+
+.acct-lede { max-width: 62ch; margin: 0; color: var(--color-fg); font-size: var(--type-control); line-height: 1.5; }
+
+.acct-choices { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+
+/* The two ways in are the same choice cards as Exo Launcher's (AccountStep): a title over why you'd pick it. */
+.acct-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 146px;
+  padding: 16px 20px;
+  border-radius: var(--exo-panel-radius, 18px);
+  color: var(--color-fg);
+  text-align: left;
+}
+.acct-choice strong { font-size: var(--type-control); font-weight: 600; }
+.acct-choice span { color: var(--color-muted); font-size: var(--type-small); }
+.acct-choice:hover { background-color: var(--hover-fill); }
+
+.acct-form { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 560px; margin-top: 4px; }
+
+.acct-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 2px; }
+
+.acct-link { align-self: flex-start; padding: 0; color: var(--color-muted); font-size: var(--type-control); }
+.acct-link:hover { color: var(--color-fg); }
+
+.acct-hint { margin: 0; color: var(--color-muted); font-size: var(--type-small); line-height: 1.45; }
+
+.acct-code {
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: var(--exo-card-radius, 14px);
+  background: var(--exo-float-line);
+  color: var(--color-fg);
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+
+.acct-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.acct-email { margin: 0; font-size: var(--type-control); font-weight: 600; }
+
+.acct-group:first-of-type { margin-top: 8px; }
+.acct-group h3 { margin: 0; font-size: var(--type-control); font-weight: 600; }
+
+.acct-list { display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0; list-style: none; }
+.acct-row { display: flex; align-items: center; gap: 12px; min-height: 44px; border-top: 1px solid var(--exo-float-line); }
+.acct-row:first-child { border-top: 0; }
+.acct-row > .acct-hint { flex: 1; min-width: 0; }
+
+/* While Settings is open the room behind it holds still: the page doesn't scroll under the wheel, and Settings' own
+   scrolling stops at its ends instead of carrying on into the room. */
+html.is-settings, html.is-settings body { overflow: hidden; }
+
+/* On the page (the first run), a group is a panel of glass of its own. */
+.set-group { padding: 6px 16px; border-radius: 18px; }
+
+.set-group h2 {
+  margin: 10px 0 4px;
+  color: var(--color-muted);
+  font-size: var(--type-small);
+  font-weight: 600;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+
+.set-row + .set-row { border-top: 1px solid var(--exo-float-line); }
+
+.set-name { flex: 1; min-width: 0; overflow: hidden; font-size: var(--type-control); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.exo-row > .set-name { white-space: normal; }
+.set-value { color: var(--color-muted); font-size: var(--type-control); font-variant-numeric: tabular-nums; }
+/* About's Diagnostics note is long: the name keeps its own width (its flex basis is 0, so a long value would take it all). */
+#set-about .set-name { flex: none; }
+
+/* A segmented control: Exo's capsule of options, the chosen one ringed. */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+}
+
+.seg {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: var(--type-control);
+  font-weight: 500;
+  color: var(--color-muted);
+  transition: background-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+}
+
+.seg:hover { color: var(--color-fg); background: var(--hover-fill); }
+.seg.is-on { color: var(--color-fg); background: var(--exo-selected); }
+
+.set-btn {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background-color: var(--exo-fill);
+  backdrop-filter: var(--exo-control-glass);
+  box-shadow: var(--exo-rim);
+  font-size: var(--type-control);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out), scale var(--dur-quick) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .set-btn:hover:not(:disabled, .is-primary) { background-color: var(--hover-fill); }
+}
+.set-btn:active:not(:disabled) { scale: 0.97; transition-duration: var(--dur-press); }
+.set-btn:active:not(:disabled, .is-primary) { background-color: var(--exo-pressed); box-shadow: var(--exo-rim-pressed); }
+:root[data-material="solid"] .set-btn:not(.is-primary) { backdrop-filter: none; background-color: var(--exo-solid-fill); }
+.set-btn:disabled { opacity: 0.4; }
+.set-btn.is-primary { background: var(--color-fg); color: var(--color-primary-fg); box-shadow: none; backdrop-filter: none; }
+.set-btn.is-primary:hover { background: var(--exo-primary-hover); }
+/* Exo Launcher's compact button (28px, 10px across) and its danger words (Bad, lifted to read on a raised glass). */
+.set-btn.is-compact { height: 28px; padding: 0 10px; }
+.set-btn.is-danger { color: color-mix(in srgb, var(--color-bad) 82%, white); }
+
+/* A switch (Exo Launcher's system.css, components/Switch.tsx): a 40 by 24 track, gray when off and green when on, with a
+   20px white knob that slides 16px on the spring. On and off are the only states; a list of choices is a dropdown. */
+.switch {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.switch .switch__control {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background-color: var(--exo-track);
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+.switch[aria-checked="true"] .switch__control { background-color: var(--color-good); }
+.switch:is(:hover, :active) .switch__control { background-color: rgb(var(--exo-ink-rgb) / 0.2); }
+.switch[aria-checked="true"]:is(:hover, :active) .switch__control { background-color: color-mix(in oklab, var(--color-good) 88%, #fff); }
+.switch .switch__thumb {
+  width: 20px;
+  height: 20px;
+  margin-inline-start: 2px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: translate var(--dur-move) var(--ease-spring);
+}
+/* On: the knob slides 16px (the track less the knob and both insets) by translate, never by margin. */
+.switch[aria-checked="true"] .switch__thumb { translate: 16px 0; }
+
+/* The Exo account (app.js), as Exo Launcher's .exo-profile-signin: its ways in stacked at the row's end, each with its
+   mark (Google's colors, Apple's in the text's), and each step's field over its buttons. */
+.exo-row { align-items: flex-start; padding: 12px 0; }
+.exo-row > .set-name { line-height: 32px; }
+.exo-signin { display: grid; gap: 8px; }
+.exo-way, .set-btn:has(.spinner) { display: inline-flex; align-items: center; justify-content: flex-start; gap: 8px; }
+.exo-way svg { width: 16px; height: 16px; flex: none; }
+.secondary.exo-way svg { color: var(--color-fg); }
+.exo-way .spinner, .set-btn .spinner { position: static; width: 16px; height: 16px; margin: 0; border-width: 2px; flex: none; }
+.exo-form { display: grid; justify-items: end; gap: 10px; padding: 4px 0 12px; }
+.exo-form > .exo-field { width: min(320px, 100%); }
+.exo-code { font-variant-numeric: tabular-nums; }
+.exo-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; width: 100%; }
+.exo-error { margin-bottom: 12px; text-align: end; }
+
+/* ── The first run, as Exo Launcher's (styles/onboarding.css): a full window on Exo's black, one column, a title
+   per step and the settings rows under it; the footer holds results only, Back and the one primary. ───────────── */
+
+.ob {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: #000000; /* void, pure black, in every appearance (misc/onboarding/SPEC-v2.md) */
+  animation: ob-fade var(--dur-base) var(--ease-out);
+}
+
+.ob.is-leaving { opacity: 0; transition: opacity var(--dur-move) var(--ease-out); }
+
+.ob-band {
+  flex: none;
+  height: var(--exo-bar-h);
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 8px var(--exo-gap) 0;
+}
+
+.ob-column {
+  width: min(100% - 48px, 600px);
+  flex: 1;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(32px, 8vh, 88px) 0 0;
+}
+
+.ob-progress {
+  width: 200px;
+  height: 4px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--exo-track);
+}
+
+.ob-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-fg);
+  transform-origin: left;
+  scale: var(--p, 0) 1;
+  transition: scale var(--dur-move) var(--ease-out);
+}
+
+.ob-step { flex: 1; }
+.ob-step.is-forward { animation: ob-from-right var(--dur-move) var(--ease-out); }
+.ob-step.is-back { animation: ob-from-left var(--dur-move) var(--ease-out); }
+
+.ob-title {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.ob-title:focus { outline: none; }
+.ob-body { margin-top: 28px; display: flex; flex-direction: column; gap: 16px; }
+.ob-links { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+
+.ob-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0 28px;
+}
+
+.ob-note { flex: 1; margin: 0; color: var(--color-muted); font-size: var(--type-control); }
+.ob-note.is-bad { color: var(--color-bad); }
+.ob-cta { min-width: 140px; height: 40px; }
+
+.ob-back {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: var(--type-control);
+  font-weight: 600;
+  transition: background-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out);
+}
+
+.ob-back:hover { color: var(--color-fg); background: var(--hover-fill); }
+
+/* Welcome: the logo and the title, centered and low; nothing counts as a step yet. */
+.ob.is-welcome .ob-progress { visibility: hidden; }
+.ob.is-welcome .ob-step { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; }
+.ob.is-welcome .ob-foot { justify-content: center; padding-bottom: clamp(48px, 24vh, 260px); }
+.ob.is-welcome .ob-note { display: none; }
+
+.ob-logo {
+  width: 96px;
+  height: 96px;
+  margin-bottom: 28px;
+  animation: ob-logo var(--dur-flight) var(--ease-out);
+}
+
+/* The Exo account's ways on its step, at the column's width. */
+.ob .exo-signin { padding: 16px 20px; }
+.ob .exo-signin .exo-way { justify-content: center; }
+
+@keyframes ob-fade { from { opacity: 0; } }
+@keyframes ob-from-right { from { opacity: 0; translate: 28px 0; } }
+@keyframes ob-from-left { from { opacity: 0; translate: -28px 0; } }
+@keyframes ob-logo { from { opacity: 0; scale: 0.92; } }
+
+/* ── What's New: a sheet over the library, each change with its glyph; older releases under "In X". ──────────── */
+
+.whats-new {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--exo-bar-h) + 12px) var(--exo-gutter) var(--exo-gutter);
+}
+
+.whats-new-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--exo-scrim);
+  animation: scrim-in var(--dur-base) var(--ease-out) backwards;
+}
+
+.whats-new-sheet {
+  position: relative;
+  width: min(100%, 540px);
+  max-height: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 36px 36px 28px;
+  border-radius: 24px;
+  animation: sheet-in var(--dur-move) var(--ease-out);
+}
+
+.whats-new-sheet h2 { margin: 0; text-align: center; font-size: var(--type-title); font-weight: 650; }
+
+.whats-new-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  mask-image: linear-gradient(transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  padding: 12px 0;
+}
+
+.whats-new-in { margin: 6px 0 0; color: var(--color-muted); font-size: var(--type-control); font-weight: 600; }
+.whats-new-item { display: flex; gap: 14px; align-items: flex-start; }
+
+.whats-new-icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--exo-selected);
+}
+
+.whats-new-icon svg { width: 20px; height: 20px; }
+.whats-new-text { display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+.whats-new-name { font-size: var(--type-control); font-weight: 600; }
+/* The change itself, in the page's ink at regular weight: the title's weight sets it apart, not grey (as Exo
+   Launcher's .exo-whats-new-words). */
+.whats-new-detail { color: var(--color-fg); font-size: var(--type-control); font-weight: 400; line-height: 1.45; }
+.whats-new-foot { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; }
+.whats-new-foot .primary, .whats-new-foot .secondary { height: 40px; }
+.whats-new-foot .secondary { background-color: var(--exo-fill); box-shadow: var(--exo-rim); }
+
+/* While a sheet holds the window (updates.js › holdWindow), the page behind it can't scroll, and a long list in the
+   sheet doesn't pass its scroll on. */
+html.is-held, html.is-held body { overflow: hidden; }
+.whats-new-list { overscroll-behavior: contain; }
+.whats-new-scrim { touch-action: none; }
+
+/* Update available: the title and the version under it, then Update now, its download's bar, or why it failed. Its
+   changes are What's New's, once the new version opens. */
+.update-offer .whats-new-sheet { width: min(100%, 420px); }
+.update-head { display: grid; gap: 4px; text-align: center; }
+.update-version { margin: 0; color: var(--color-muted); font-size: var(--type-control); }
+.update-foot { display: grid; gap: 14px; }
+.update-progress { display: grid; gap: 10px; justify-items: center; min-height: 40px; align-content: center; }
+.update-progress .mini-bar { width: 100%; }
+.update-status { margin: 0; color: var(--color-muted); font-size: var(--type-control); text-align: center; }
+.update-status.is-bad { color: var(--color-bad); }
+.update-failure { display: grid; gap: 10px; justify-items: center; }
+
+/* ── About: the version row's buttons, and a download's bar beside its words. ─────────────────────────────────── */
+
+.set-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.set-value.is-bad { color: var(--color-bad); }
+
+.mini-bar {
+  width: 120px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--exo-track);
+}
+
+.mini-bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-fg);
+  transform-origin: left;
+  scale: var(--p, 0) 1;
+  transition: scale var(--dur-move) linear;
+}
+
+.mini-bar.is-busy span { scale: 0.3 1; animation: mini-busy 1.4s linear infinite; }
+
+@keyframes mini-busy { from { translate: -100% 0; } to { translate: 340% 0; } }
+
+
+/* ── The version menu: an item's versions, best first, the best one marked; it grows from the Play pressed, under it
+   or above it where the window runs out (app.js › placeSources), and scrolls past eight or so. ─────────────────── */
+
+.sources-menu {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: min(460px, calc(100vw - 2 * var(--exo-gap)));
+  max-height: min(480px, calc(100vh - var(--exo-bar-h) - 2 * var(--exo-gap)));
+  padding: 6px;
+  border-radius: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: menu-in var(--dur-base) var(--ease-out);
+}
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background-color var(--dur-quick) var(--ease-out);
+}
+
+.source-row:hover { background: var(--hover-fill); }
+.source-row:active { background: var(--exo-pressed); }
+.source-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.source-name { font-size: var(--type-control); font-weight: 500; }
+.source-detail { color: var(--color-muted); font-size: var(--type-small); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.source-best {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--exo-selected);
+  font-size: var(--type-small);
+  font-weight: 500;
+}
+
+.sources-wait { position: static; margin: 14px auto; }
+
+/* A choice from a pressed control (Sign out's): the version menu's glass, as wide as its rows. */
+.choice-menu { width: auto; min-width: 220px; }
+
+/* "Exo now has accounts" (index.html #accountOffer): Exo Launcher's AccountSheet, with the logo centred over its title. */
+.account-offer-logo { display: block; margin: 0 auto 16px; }
+.account-offer-sheet h2 { text-align: center; }
+.account-offer-points { display: grid; gap: 8px; margin: 0 0 8px; padding-left: 18px; color: var(--color-fg); font-size: var(--type-control); }
+.account-offer-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.account-offer-form { margin-top: 16px; }
+
+/* The account banner on Home (CLIENT.md 4.1 F; Exo Launcher's AccountBanner): slim, one hairline, no shadow. */
+.home-banner:empty { display: none; }
+.account-banner { display: flex; align-items: center; gap: 12px; margin: calc(var(--exo-bar-h) + 12px) 16px 0; padding: 10px 10px 10px 16px; border: 1px solid var(--exo-float-line); border-radius: 16px; }
+.account-banner p { flex: 1; min-width: 0; margin: 0; color: var(--color-fg); font-size: var(--type-control); }
+.account-banner-actions { display: flex; gap: 8px; flex: none; }
+
+/* ── 1.5: Settings, the Exo account and the Jellyfin sign-in on solid Void ───────────────────────────────────────────
+   As Exo Launcher 3.26 draws them (its DESIGN.md › Surfaces, Tokens, Grammar): one appearance, Void black; nothing
+   blurs or shows through; every outline, divider and sheet edge is the one line, one device pixel wide; a control is
+   black with that line; what is chosen is a white pill (a tab) or a white marker at a row's edge (Settings' pages),
+   never an outline; a row's name stands on its own, with a second line only where something would be lost. */
+:root {
+  --exo-line: #2e2e2e;
+  --exo-hair: 1px; /* one device pixel: app.js › setHair */
+}
+
+/* Settings: a black slab with the one line, over the scrim that dims the room and the Bar. */
+.settings-back { background: rgb(0 0 0 / 0.72); }
+.settings-sheet {
+  --color-fg: #ffffff;
+  --color-muted: #b4b4b4;
+  --color-faint: #9a9a9a;
+  --exo-float-line: var(--exo-line);
+  --hover-fill: #1a1a1a;
+  --exo-pressed: #222222;
+  background: #000000;
+  box-shadow: inset 0 0 0 var(--exo-hair) var(--exo-line);
+}
+.settings-nav { border-right: var(--exo-hair) solid var(--exo-line); }
+.settings-sheet .set-row { border-top: var(--exo-hair) solid var(--exo-line); }
+.acct-row { border-top: var(--exo-hair) solid var(--exo-line); }
+
+/* The open page: a white pill with black words, as the room picked in the Bar. Never an outline, never a marker. */
+.settings-nav button { position: relative; color: var(--color-muted); border-radius: 999px; transition: background-color var(--dur-quick) var(--ease-out), color var(--dur-quick) var(--ease-out); }
+.settings-nav button[aria-current="page"] { background: #ffffff; color: #000000; font-weight: 600; }
+@media (hover: hover) and (pointer: fine) {
+  .settings-nav button:hover:not([aria-current]) { color: var(--color-fg); }
+}
+
+/* Controls on these pages: black with the one line, no glass behind them. */
+:is(.settings-sheet, .signin-room, .ob, .account-offer-sheet, .account-banner) :is(.set-btn:not(.is-primary), .exo-field) {
+  background-color: #000000;
+  backdrop-filter: none;
+  box-shadow: inset 0 0 0 var(--exo-hair) var(--exo-line);
+}
+@media (hover: hover) and (pointer: fine) {
+  :is(.settings-sheet, .signin-room, .ob, .account-offer-sheet, .account-banner) .set-btn:hover:not(:disabled, .is-primary) { background-color: #1a1a1a; }
+}
+:is(.settings-sheet, .signin-room, .ob, .account-offer-sheet) .exo-field { height: 36px; }
+:is(.settings-sheet, .signin-room, .ob, .account-offer-sheet) .exo-field:focus-visible { outline: 2px solid #ffffff; outline-offset: -2px; }
+.settings-sheet .set-btn.is-danger { color: var(--color-bad); }
+/* A state at a row's right edge is muted; green only for what is running. */
+.settings-sheet .set-value { color: var(--color-muted); }
+
+/* A form that is a page's own (the account's, the Jellyfin sign-in): its fields stacked at a width a line of typing
+   needs, never across the sheet; its one primary first, then the quiet ways out beside it. */
+.page-form { display: flex; flex-direction: column; gap: 14px; width: min(calc(380px * var(--exo-scale, 1)), 100%); padding: 0; }
+.page-form .acct-field > span { color: var(--color-muted); font-size: var(--type-small); font-weight: 500; }
+.page-form .exo-field { width: 100%; }
+.page-form .set-actions { justify-content: flex-start; align-items: center; gap: 8px 16px; margin-top: 4px; }
+.page-form .acct-hint { margin-top: -6px; }
+.settings-sheet .set-group > h2 + .page-form { margin-top: 4px; }
+
+/* A group with no slab of its own under it (the first run, the sign-in): its rows between hairlines. */
+.set-group.is-lined { width: 100%; padding: 0; border-radius: 0; }
+.set-group.is-lined .set-row { min-height: 62px; border-top: var(--exo-hair) solid var(--exo-line); }
+.set-group.is-lined .set-row:last-child { border-bottom: var(--exo-hair) solid var(--exo-line); }
+
+/* The Jellyfin sign-in, which is every room while no server is signed in to: on the page's own black, the mark, the
+   title and the form in the middle, as the first run's steps. */
+.signin-room { min-height: 100vh; display: grid; place-items: center; padding: calc(var(--exo-bar-h) + 24px) var(--exo-gutter) 48px; }
+.signin-column { width: min(calc(380px * var(--exo-scale, 1)), 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.signin-logo { display: block; margin-bottom: 20px; }
+.signin-title { margin: 0 0 24px; font-size: calc(28px * var(--exo-scale, 1)); font-weight: 650; line-height: 1.15; }
+
+/* The first run's steps keep the same forms; their links sit under them, quiet. */
+.ob .set-group h2 { margin: 0 0 14px; color: var(--color-fg); font-size: var(--type-control); font-weight: 600; }
+.ob .set-group { padding: 0; border-radius: 0; }
+.ob-links { gap: 10px; margin-top: 8px; }
+
+/* The account banner on Home and the account sheet: the same line, no tint of their own. */
+.account-banner { border: var(--exo-hair) solid var(--exo-line); background: #000000; }
+.account-offer-sheet { background: #000000; backdrop-filter: none; box-shadow: inset 0 0 0 var(--exo-hair) var(--exo-line); }
+
+/* The Bar's rooms, and every row of tabs (a show's seasons, a room's libraries): the current one is a white pill with
+   black words. The group draws no ring around a ring. */
+.tab.is-on { background: #ffffff; color: #000000; box-shadow: none; }
+.tab.is-on svg { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .tab.is-on:hover { background: #e8e8e8; color: #000000; }
+}
+/* A row of tabs on the page's black (seasons, libraries) is bare words around its white pill. The Bar's rooms keep their
+   capsule: a film's art runs under the Bar, and bare words over art would not read. */
+.seasons { background: none; backdrop-filter: none; box-shadow: none; padding: 0; }
+.page-form .set-actions .acct-link { align-self: center; }
+/* The recovery code, shown once: the code in a box of the one line (never a gray fill), Copy at its end, then the
+   field it is typed back into. */
+.page-form.is-code { width: min(calc(520px * var(--exo-scale, 1)), 100%); }
+.page-form .acct-lede { max-width: none; color: var(--color-fg); }
+.acct-code-row { display: flex; align-items: center; gap: 10px; }
+.acct-code-row .acct-code {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  border-radius: 14px;
+  background: #000000;
+  box-shadow: inset 0 0 0 var(--exo-hair) var(--exo-line);
+  color: var(--color-fg);
+  font-size: calc(16px * var(--exo-scale, 1));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  user-select: text;
+  white-space: nowrap;
+}
+/* A form a row opens (Change password, New code, Delete): under its row at the same width, its button on its left edge. */
+.settings-sheet .set-sub.page-form { padding: 0 0 18px; }

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    A walk-through of a file-level update on a test install (tools\Build-Release.ps1 -TestRoot), against a copy of the
+    update service on this PC. It runs the app's own update code (src\ExoCinema\Updates, compiled in as it is) on a
+    folder and an address given on the command line, which the app itself never takes. Program.cs says how to run it.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>ExoCinema.Walkthrough</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\ExoCinema\Updates\*.cs" LinkBase="Updates" />
+  </ItemGroup>
+</Project>

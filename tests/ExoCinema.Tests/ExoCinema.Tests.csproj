@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The player's automatic choices on simulated PCs: the app's pure rule files are compiled in as they are (no window,
+    no mpv), and each test feeds them made-up hardware. The running app stays the real check for what mpv does.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <Platforms>x64</Platforms>
+    <Platform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</Platform>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- The film reader (Mpv/PlayStream.cs) is mpv's callbacks over raw buffers. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>ExoCinema.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.14" />
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Exo's identity, as the app has it: the shared vectors run against it byte for byte (IdentityVectorsTests). -->
+    <ProjectReference Include="..\..\src\Exo.Identity\Exo.Identity.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Compile Include="..\..\src\ExoCinema\AppInfo.cs" Link="App\AppInfo.cs" />
+    <Compile Include="..\..\src\ExoCinema\Ui\CaptionDragRegions.cs" Link="App\CaptionDragRegions.cs" />
+    <Compile Include="..\..\src\ExoCinema\Ui\HiddenWindow.cs" Link="App\HiddenWindow.cs" />
+    <Compile Include="..\..\src\ExoCinema\Jellyfin\*.cs" LinkBase="App\Jellyfin" />
+    <Compile Include="..\..\src\ExoCinema\Library\PlayerSurface.cs" Link="App\PlayerSurface.cs" />
+    <Compile Include="..\..\src\ExoCinema\Library\CinemaLibrary.cs" Link="App\CinemaLibrary.cs" />
+    <Compile Include="..\..\src\ExoCinema\Net\StreamProbe.cs" Link="App\StreamProbe.cs" />
+    <Compile Include="..\..\src\ExoCinema\AppLog.cs" Link="App\AppLog.cs" />
+    <Compile Include="..\..\src\ExoCinema\UiGuard.cs" Link="App\UiGuard.cs" />
+    <Compile Include="..\..\src\ExoCinema\GraphicsCard.cs" Link="App\GraphicsCard.cs" />
+    <Compile Include="..\..\src\ExoCinema\LinkFit.cs" Link="App\LinkFit.cs" />
+    <Compile Include="..\..\src\ExoCinema\LinkSpeed.cs" Link="App\LinkSpeed.cs" />
+    <Compile Include="..\..\src\ExoCinema\PlaybackPlan.cs" Link="App\PlaybackPlan.cs" />
+    <Compile Include="..\..\src\ExoCinema\HdrFilms.cs" Link="App\HdrFilms.cs" />
+    <Compile Include="..\..\src\ExoCinema\LegacyData.cs" Link="App\LegacyData.cs" />
+    <Compile Include="..\..\src\ExoCinema\PictureRules.cs" Link="App\PictureRules.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\WarmupPlan.cs" Link="App\WarmupPlan.cs" />
+    <Compile Include="..\..\src\ExoCinema\SoundOutput.cs" Link="App\SoundOutput.cs" />
+    <Compile Include="..\..\src\ExoCinema\Watch\WatchLedger.cs" Link="App\WatchLedger.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\ScrubPlan.cs" Link="App\ScrubPlan.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\StartBuffer.cs" Link="App\StartBuffer.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\ReadAhead.cs" Link="App\ReadAhead.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\SystemMemory.cs" Link="App\SystemMemory.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\RepeatedLines.cs" Link="App\RepeatedLines.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\CacheState.cs" Link="App\CacheState.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\MkvIndex.cs" Link="App\MkvIndex.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\PlayStream.cs" Link="App\PlayStream.cs" />
+    <Compile Include="..\..\src\ExoCinema\Mpv\MpvNative.cs" Link="App\MpvNative.cs" />
+    <Compile Include="..\..\src\ExoCinema\Sync\CinemaSettings.cs" Link="App\CinemaSettings.cs" />
+    <Compile Include="..\..\src\ExoCinema\Net\Egress.cs" Link="App\Egress.cs" />
+    <Compile Include="..\..\src\ExoCinema\Net\Ipv6First.cs" Link="App\Ipv6First.cs" />
+    <Compile Include="..\..\src\ExoCinema\Net\LocalFileHost.Rules.cs" Link="App\LocalFileHost.Rules.cs" />
+    <Compile Include="..\..\src\ExoCinema\CrashReport.cs" Link="App\CrashReport.cs" />
+    <Compile Include="..\..\src\ExoCinema\UiWatchdog.cs" Link="App\UiWatchdog.cs" />
+    <Compile Include="..\..\src\ExoCinema\PageHeartbeat.cs" Link="App\PageHeartbeat.cs" />
+    <Compile Include="../../src/ExoCinema/Account/AccountDevices.cs" Link="App/AccountDevices.cs" />
+    <Compile Include="../../src/ExoCinema/Account/AccountSessionStore.cs" Link="App/AccountSessionStore.cs" />
+    <Compile Include="../../src/ExoCinema/Net/AccountEndpoint.cs" Link="App/AccountEndpoint.cs" />
+    <Compile Include="../../src/ExoCinema/Account/AccountSync.cs" Link="App/AccountSync.cs" />
+    <Compile Include="../../src/ExoCinema/Account/AccountSyncSources.cs" Link="App/AccountSyncSources.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- File-level updates (src\ExoCinema\Updates): the file list, the diff, staging and the swap script, as the app has them. -->
+    <Compile Include="..\..\src\ExoCinema\Updates\*.cs" LinkBase="App\Updates" />
+  </ItemGroup>
+</Project>

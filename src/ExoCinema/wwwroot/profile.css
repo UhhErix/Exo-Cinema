@@ -1,0 +1,2736 @@
+/* Exo Cinema's copy of Exo Launcher's Profile room styles (ui/src/styles/profile.css, and the exo-profile-* rules of its
+   settings.css at the end), made by .claude/gen_profile_css.py and kept to Launcher's class names so the two rooms
+   stay one design: Launcher's controls are Cinema's here (.set-btn, .form-error, .set-name, .set-group) and its fonts
+   are beside the page (fonts/profile, each under its own license). Cinema's own changes are in profile-cinema.css. */
+:root { --font-sans: "Geist", sans-serif; }
+
+/* The Profile room (components/profile/*; plan §2.17): the profile as a page of its own, next to Devices, made to be a
+   work of art. What a profile looks like is the person's own: its accent, frames, name styles, effects and media sit
+   outside Exo's palette and its no-glow rule (DESIGN.md, Rooms › Profile). Exo's own chrome on it (buttons, sheets,
+   the stats band) stays Exo's glass. */
+.exo-profile-room {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+.exo-profile-stage,
+.exo-profile-welcome {
+  --profile-accent: #f5f5f7;
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ── The backdrop: the look's background (or a game's art) filling the room, falling to the page at its foot ── */
+.exo-profile-backdrop {
+  position: absolute;
+  /* Past the room's edges by more than it ever leans, so leaning never shows an edge. */
+  inset: -28px;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  translate: calc(var(--px, 0) * -16px) calc(var(--py, 0) * -10px);
+  transition: translate 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* A layout over the art: the art stays bright to the room's foot, only its edges darken (the vignette). */
+.exo-profile-stage:has(.exo-profile-page.is-filled) .exo-profile-backdrop::after {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--color-bg) 22%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 34%, transparent) 60%,
+    color-mix(in srgb, var(--color-bg) 58%, transparent) 100%);
+}
+
+/* Film grain and a vignette over the art, under every word: the room as a frame of film. */
+.exo-profile-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse 120% 95% at 50% 42%, transparent 52%, rgb(0 0 0 / 0.55) 100%);
+}
+
+.exo-profile-grain::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.6 -0.3'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 240px 240px;
+  opacity: 0.11;
+  mix-blend-mode: overlay;
+  animation: exo-profile-grain 900ms steps(6) infinite;
+}
+
+@keyframes exo-profile-grain {
+  0% { translate: 0 0; }
+  17% { translate: -7% 4%; }
+  33% { translate: 5% -6%; }
+  50% { translate: -3% -9%; }
+  67% { translate: 8% 3%; }
+  83% { translate: -6% 7%; }
+  100% { translate: 0 0; }
+}
+
+.exo-profile-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--color-bg) 28%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 48%, transparent) 42%,
+    color-mix(in srgb, var(--color-bg) 86%, transparent) 70%,
+    var(--color-bg) 100%);
+}
+
+.exo-profile-backdrop-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-out);
+}
+
+.exo-profile-backdrop-layer.is-on {
+  opacity: 1;
+}
+
+.exo-profile-backdrop-layer > img,
+.exo-profile-backdrop-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The art breathes: a slow push in, as a title screen's does. */
+.exo-profile-backdrop-layer.is-on > img,
+.exo-profile-backdrop-media {
+  animation: exo-profile-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes exo-profile-drift {
+  from { scale: 1.03; translate: 0 0; }
+  to { scale: 1.12; translate: -1.5% -1%; }
+}
+
+/* The look's effect: over the art, under every word, never in the way of a press. */
+.exo-profile-effect {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* ── The page ── */
+/* The profile is one artwork wherever it's seen: it keeps its own sizes whatever Text size is (Settings > General). */
+.exo-profile-page {
+  --exo-scale: 1;
+  /* Japanese in Japanese forms: Geist has no CJK, and Windows' own fallback is a Chinese face. */
+  font-family: var(--font-sans), "Yu Gothic UI", "Yu Gothic", "Meiryo UI", "Noto Sans JP", sans-serif;
+}
+
+/* The hero as blocks: the layout alone, Customize and Account at its top right. */
+.exo-profile-page.is-filled.is-hero-blocks {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* The page's white button keeps its edge over a white banner. */
+.exo-profile-page-actions .set-btn.is-primary {
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.16);
+}
+
+.exo-profile-page-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 160;
+  display: flex;
+  gap: 8px;
+}
+
+.exo-profile-block.is-avatar > .exo-profile-block-body,
+.exo-profile-block.is-name > .exo-profile-block-body {
+  display: grid;
+  overflow: visible;
+  container-type: size;
+}
+
+.exo-profile-block.is-avatar > .exo-profile-block-body {
+  place-items: center;
+}
+
+.exo-profile-block-avatar {
+  --profile-avatar: min(100cqw, 100cqh);
+}
+
+.exo-profile-block.is-name > .exo-profile-block-body {
+  align-items: center;
+}
+
+/* The name fills its block's height, as the hero's does its strip, unless that runs past its width (--name-fit, set as
+   drawn by BlockName). As wide as its letters, so they can be measured. */
+.exo-profile-block-name {
+  justify-self: start;
+  margin: 0;
+  font-size: calc(100cqh * 0.72 * var(--name-fit, 1));
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.exo-profile-block.is-banner > .exo-profile-block-body > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A block's own font, for every word in it. */
+.exo-profile-block[data-font="orbitron"] > .exo-profile-block-body { font-family: "Exo Profile Orbitron", var(--font-sans); }
+.exo-profile-block[data-font="bebas"] > .exo-profile-block-body { font-family: "Exo Profile Bebas Neue", var(--font-sans); letter-spacing: 0.03em; }
+.exo-profile-block[data-font="pixel"] > .exo-profile-block-body { font-family: "Exo Profile Press Start 2P", var(--font-sans); }
+.exo-profile-block[data-font="marker"] > .exo-profile-block-body { font-family: "Exo Profile Permanent Marker", var(--font-sans); }
+.exo-profile-block[data-font="script"] > .exo-profile-block-body { font-family: "Exo Profile Pacifico", var(--font-sans); }
+.exo-profile-block[data-font="tube"] > .exo-profile-block-body { font-family: "Exo Profile Monoton", var(--font-sans); }
+
+.exo-profile-room-scroll {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px var(--exo-gutter) 48px;
+}
+
+.exo-profile-page {
+  display: grid;
+  gap: 36px;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+}
+
+/* The hero: the banner across the top, the framed picture over its lower edge, the name beside it at full size. */
+.exo-profile-hero {
+  display: grid;
+  padding-top: clamp(48px, 16vh, 200px);
+}
+
+.exo-profile-hero.has-banner {
+  padding-top: 12px;
+}
+
+.exo-profile-banner {
+  aspect-ratio: 3 / 1;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--profile-accent) 16%, #050506);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--profile-accent) 26%, transparent), 0 24px 60px rgb(0 0 0 / 0.45);
+}
+
+.exo-profile-banner > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exo-profile-hero-id {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.exo-profile-hero.has-banner .exo-profile-hero-id {
+  margin-top: -84px;
+  padding-left: 36px;
+}
+
+.exo-profile-hero-name {
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 18px;
+  font-size: clamp(36px, 4.8vw, 68px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.exo-profile-hero-name.is-plain {
+  text-shadow: 0 2px 24px rgb(0 0 0 / 0.55);
+}
+
+.exo-profile-hero-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+  margin-bottom: 26px;
+}
+
+/* ── The picture in its frame ── */
+.exo-profile-avatar-frame {
+  --profile-ring: calc(var(--profile-avatar) * 0.03 + 2px);
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--profile-avatar);
+  height: var(--profile-avatar);
+  border-radius: 999px;
+}
+
+.exo-profile-avatar-face {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--profile-accent, #f5f5f7) 22%, var(--exo-tile));
+  box-shadow: 0 0 0 var(--profile-ring) var(--color-bg);
+}
+
+.exo-profile-avatar-face > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exo-profile-avatar-face > .exo-profile-avatar-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+.exo-profile-avatar-letter {
+  color: var(--color-fg);
+  font-size: calc(var(--profile-avatar) * 0.42);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Glow: a ring of the accent, breathing. */
+.exo-profile-avatar-frame.is-glow > .exo-profile-avatar-face {
+  box-shadow: 0 0 0 var(--profile-ring) var(--profile-accent), 0 0 calc(var(--profile-avatar) * 0.22) color-mix(in srgb, var(--profile-accent) 60%, transparent);
+  animation: exo-profile-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes exo-profile-breathe {
+  50% { box-shadow: 0 0 0 var(--profile-ring) var(--profile-accent), 0 0 calc(var(--profile-avatar) * 0.42) var(--profile-accent); }
+}
+
+/* Orbit, Holo and Fire: a ring drawn by a turning cone, cut to a band round the picture. */
+.exo-profile-avatar-frame:is(.is-orbit, .is-holo, .is-fire)::before,
+.exo-profile-avatar-frame:is(.is-holo, .is-fire)::after {
+  content: "";
+  position: absolute;
+  inset: calc(var(--profile-ring) * -1.8);
+  border-radius: 999px;
+  pointer-events: none;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--profile-ring) * 1.6), #000 calc(100% - var(--profile-ring) * 1.6 + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--profile-ring) * 1.6), #000 calc(100% - var(--profile-ring) * 1.6 + 1px));
+  animation: exo-profile-spin 3.6s linear infinite;
+}
+
+.exo-profile-avatar-frame.is-orbit::before {
+  background: conic-gradient(from 0deg, color-mix(in srgb, var(--profile-accent) 18%, transparent) 0 55%, var(--profile-accent) 86%, #fff 90%, color-mix(in srgb, var(--profile-accent) 18%, transparent) 92%);
+}
+
+.exo-profile-avatar-frame.is-holo::before {
+  background: conic-gradient(#ff5f6d, #ffc371, #f9f871, #3ee6b0, #4fd1ff, #6fa8ff, #ff5fd2, #ff5f6d);
+  animation-duration: 6s;
+}
+
+.exo-profile-avatar-frame.is-holo::after {
+  inset: calc(var(--profile-ring) * -3);
+  background: conic-gradient(#ff5f6d, #ffc371, #f9f871, #3ee6b0, #4fd1ff, #6fa8ff, #ff5fd2, #ff5f6d);
+  -webkit-mask: none;
+  mask: none;
+  filter: blur(calc(var(--profile-avatar) * 0.09));
+  opacity: 0.5;
+  z-index: -1;
+  animation-duration: 6s;
+}
+
+.exo-profile-avatar-frame.is-fire::before {
+  inset: calc(var(--profile-ring) * -2.4);
+  background: conic-gradient(from 0deg, #ff3d00, var(--profile-accent), #ffd36b, #ff3d00, #ff6a2b, #ffd36b, #ff3d00);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--profile-ring) * 2.2), #000 calc(100% - var(--profile-ring) * 2.2 + 1px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - var(--profile-ring) * 2.2), #000 calc(100% - var(--profile-ring) * 2.2 + 1px));
+  filter: blur(1.5px);
+  animation: exo-profile-spin 2.4s linear infinite, exo-profile-flicker 0.7s ease-in-out infinite alternate;
+}
+
+.exo-profile-avatar-frame.is-fire::after {
+  inset: calc(var(--profile-ring) * -4);
+  background: radial-gradient(closest-side, transparent 72%, color-mix(in srgb, #ff6a2b 70%, transparent) 84%, transparent 100%);
+  -webkit-mask: none;
+  mask: none;
+  filter: blur(calc(var(--profile-avatar) * 0.05));
+  z-index: -1;
+  animation: exo-profile-flicker 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes exo-profile-spin {
+  to { rotate: 360deg; }
+}
+
+@keyframes exo-profile-flicker {
+  from { opacity: 0.7; scale: 0.985; }
+  to { opacity: 1; scale: 1.035; }
+}
+
+/* ── The name's styles ── */
+/* Letters painted in the accent take it at least mid-light on a dark page and at most that on Light: a white accent
+   (or Gradient's white second color) on Light, or a black one on Void, painted the name in the page's own color. */
+.exo-profile-nametag {
+  --name-accent: oklch(from var(--profile-accent, #f5f5f7) max(l, 0.6) c h);
+  --name-accent2: oklch(from var(--profile-accent2, #ffffff) max(l, 0.6) c h);
+  margin: 0;
+}
+
+:root[data-exo-theme="light"] .exo-profile-nametag {
+  --name-accent: oklch(from var(--profile-accent, #f5f5f7) min(l, 0.6) c h);
+  --name-accent2: oklch(from var(--profile-accent2, #ffffff) min(l, 0.6) c h);
+}
+
+.exo-profile-nametag.is-glow {
+  text-shadow: 0 0 16px var(--profile-accent), 0 0 44px color-mix(in srgb, var(--profile-accent) 60%, transparent);
+}
+
+.exo-profile-nametag.is-shimmer {
+  background: linear-gradient(100deg, var(--color-fg) 0 36%, var(--profile-accent) 45%, #fff 50%, var(--profile-accent) 55%, var(--color-fg) 64% 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: exo-profile-shimmer 3.8s linear infinite;
+}
+
+@keyframes exo-profile-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+.exo-profile-nametag.is-wave > span > span {
+  display: inline-block;
+  animation: exo-profile-wave 2.6s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+@keyframes exo-profile-wave {
+  0%, 55%, 100% { translate: 0 0; color: var(--color-fg); }
+  25% { translate: 0 -0.12em; color: var(--name-accent); }
+}
+
+/* The name's fonts (public/fonts/profile, each under its own license beside it): the person's own choice for their
+   name, never Exo's chrome. A face loads only when a name on screen uses it. */
+@font-face {
+  font-family: "Exo Profile Orbitron";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("fonts/profile/orbitron.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Exo Profile Bebas Neue";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("fonts/profile/bebas.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Exo Profile Press Start 2P";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("fonts/profile/pixel.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Exo Profile Permanent Marker";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("fonts/profile/marker.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Exo Profile Pacifico";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("fonts/profile/script.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Exo Profile Monoton";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("fonts/profile/tube.ttf") format("truetype");
+}
+
+.exo-profile-nametag[data-font="orbitron"] {
+  font-family: "Exo Profile Orbitron", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.exo-profile-nametag[data-font="bebas"] {
+  font-family: "Exo Profile Bebas Neue", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.exo-profile-nametag[data-font="pixel"] {
+  font-family: "Exo Profile Press Start 2P", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0; line-height: 1.3;
+}
+
+.exo-profile-nametag[data-font="marker"] {
+  font-family: "Exo Profile Permanent Marker", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.exo-profile-nametag[data-font="script"] {
+  font-family: "Exo Profile Pacifico", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.exo-profile-nametag[data-font="tube"] {
+  font-family: "Exo Profile Monoton", var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Gradient: the accent into the second color. */
+.exo-profile-nametag.is-gradient {
+  background: linear-gradient(90deg, var(--name-accent), var(--name-accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Neon: a lit tube in the accent, with now and then a dip as a real one has (never a strobe). */
+.exo-profile-nametag.is-neon {
+  color: #fff;
+  text-shadow: 0 0 3px #fff, 0 0 10px var(--profile-accent), 0 0 22px var(--profile-accent), 0 0 46px var(--profile-accent);
+  animation: exo-profile-neon 6s linear infinite;
+}
+
+/* Light: the tube's core is the accent at most mid-light, its glow kept. White letters in a white or pale accent's glow
+   were gone on the white page. */
+:root[data-exo-theme="light"] .exo-profile-nametag.is-neon {
+  color: oklch(from var(--profile-accent) min(l, 0.5) c h);
+  text-shadow: 0 0 10px var(--profile-accent), 0 0 22px var(--profile-accent), 0 0 46px var(--profile-accent);
+}
+
+@keyframes exo-profile-neon {
+  0%, 71%, 74%, 100% { opacity: 1; }
+  72% { opacity: 0.72; }
+}
+
+/* Glitch: two copies in the accent and the second color, cut and pushed apart for a moment every few seconds. */
+.exo-profile-nametag.is-glitch {
+  position: relative;
+}
+
+.exo-profile-nametag.is-glitch::before,
+.exo-profile-nametag.is-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.exo-profile-nametag.is-glitch::before {
+  color: var(--name-accent);
+  animation: exo-profile-glitch-a 3.2s steps(1) infinite;
+}
+
+.exo-profile-nametag.is-glitch::after {
+  color: oklch(from var(--profile-accent2, #4fd1ff) max(l, 0.6) c h);
+  animation: exo-profile-glitch-b 3.2s steps(1) infinite;
+}
+
+/* Light: its slices at most mid-light too; a white accent's slices were white bars across the name. */
+:root[data-exo-theme="light"] .exo-profile-nametag.is-glitch::after {
+  color: oklch(from var(--profile-accent2, #4fd1ff) min(l, 0.6) c h);
+}
+
+@keyframes exo-profile-glitch-a {
+  0%, 84%, 100% { opacity: 0; translate: 0 0; clip-path: inset(0 0 0 0); }
+  86% { opacity: 0.9; translate: -3px 1px; clip-path: inset(10% 0 55% 0); }
+  90% { opacity: 0.9; translate: 3px -1px; clip-path: inset(60% 0 8% 0); }
+  94% { opacity: 0.9; translate: -2px 0; clip-path: inset(35% 0 35% 0); }
+}
+
+@keyframes exo-profile-glitch-b {
+  0%, 85%, 100% { opacity: 0; translate: 0 0; clip-path: inset(0 0 0 0); }
+  87% { opacity: 0.9; translate: 3px -1px; clip-path: inset(50% 0 20% 0); }
+  91% { opacity: 0.9; translate: -3px 1px; clip-path: inset(5% 0 70% 0); }
+  95% { opacity: 0.9; translate: 2px 0; clip-path: inset(70% 0 5% 0); }
+}
+
+/* Typewriter: the name typed out letter by letter behind a blinking caret, held, then typed again. */
+.exo-profile-nametag.is-typewriter {
+  position: relative;
+  animation: exo-profile-type calc(var(--n) * 140ms + 2600ms) steps(var(--n), end) infinite;
+}
+
+.exo-profile-nametag.is-typewriter::after {
+  content: "";
+  display: inline-block;
+  width: 0.08em;
+  height: 0.9em;
+  margin-left: 0.06em;
+  vertical-align: -0.08em;
+  background: var(--name-accent);
+  animation: exo-profile-caret 1s steps(1) infinite;
+}
+
+@keyframes exo-profile-type {
+  from { clip-path: inset(-20% 100% -20% 0); }
+  60%, to { clip-path: inset(-20% 0 -20% 0); }
+}
+
+@keyframes exo-profile-caret {
+  50% { opacity: 0; }
+}
+
+/* Chrome: polished metal, a light running across it now and then. */
+.exo-profile-nametag.is-chrome {
+  background: linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.9) 50%, transparent 60%) no-repeat,
+    linear-gradient(180deg, #ffffff 0%, #d9dae0 38%, #6d6f78 50%, #c9cad2 58%, #ffffff 100%);
+  background-size: 250% 100%, 100% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: exo-profile-chrome 4.5s ease-in-out infinite;
+}
+
+/* Light: the same chrome in gunmetal, its shine kept; silver letters on the white page were near invisible. */
+:root[data-exo-theme="light"] .exo-profile-nametag.is-chrome {
+  /* The image alone: the shorthand reset the clip to the letters and drew a bar. */
+  background-image: linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.75) 50%, transparent 60%),
+    linear-gradient(180deg, #6b6e78 0%, #2c2e35 38%, #a4a7b0 50%, #3b3d45 58%, #121317 100%);
+}
+
+@keyframes exo-profile-chrome {
+  0%, 55% { background-position: 150% 0, 0 0; }
+  100% { background-position: -50% 0, 0 0; }
+}
+
+/* ── Showcases ── */
+.exo-profile-showcase {
+  display: grid;
+  gap: 14px;
+}
+
+.exo-profile-showcase > h2 {
+  margin: 0;
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-radius: 20px;
+}
+
+.exo-profile-stat {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 22px;
+}
+
+.exo-profile-stat + .exo-profile-stat {
+  border-left: 1px solid var(--exo-float-line);
+}
+
+.exo-profile-stat-value {
+  overflow: hidden;
+  font-size: calc(28px * var(--exo-scale, 1));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exo-profile-stat-label {
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(13px * var(--exo-scale, 1));
+}
+
+.exo-profile-most {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.exo-profile-most[data-count="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.exo-profile-most[data-count="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.exo-profile-game {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--profile-accent) 10%, #050506);
+  box-shadow: 0 0 0 1px var(--exo-float-line);
+}
+
+.exo-profile-game:first-child {
+  box-shadow: 0 0 0 1.5px var(--profile-accent), 0 0 32px color-mix(in srgb, var(--profile-accent) 35%, transparent);
+}
+
+.exo-profile-game > img {
+  position: absolute;
+  inset: 0;
+}
+
+.exo-profile-game-meta {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 2px;
+  padding: 36px 16px 14px;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.78));
+  color: #fff;
+}
+
+.exo-profile-game-meta > strong {
+  overflow: hidden;
+  font-size: calc(20px * var(--exo-scale, 1));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exo-profile-game-meta > span {
+  color: #dbdbdb;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-variant-numeric: tabular-nums;
+}
+
+.exo-profile-recent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 14px;
+}
+
+.exo-profile-cover {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.exo-profile-cover-art {
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+}
+
+.exo-profile-cover > strong {
+  overflow: hidden;
+  margin-top: 4px;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exo-profile-cover > span {
+  color: var(--color-muted);
+  font-size: calc(12px * var(--exo-scale, 1));
+}
+
+.exo-profile-setup {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.exo-profile-rig {
+  display: grid;
+  grid-column: span 2;
+  align-content: start;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 18px;
+}
+
+.exo-profile-rig-part {
+  display: grid;
+  gap: 2px;
+}
+
+.exo-profile-rig-part > span {
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(12px * var(--exo-scale, 1));
+}
+
+.exo-profile-rig-part > strong {
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-gear {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 18px;
+}
+
+.exo-profile-gear > .exo-profile-gear-frame,
+.exo-profile-gear > .exo-profile-gear-art,
+.exo-profile-gear-blank {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  margin-bottom: 6px;
+  object-fit: contain;
+}
+
+/* Each piece's picture at one area, whatever its shape: its ratio's square root across and its inverse down, never past
+   the frame. Fitted to the frame instead, a tall mouse or mic filled it top to bottom beside a thin wide keyboard. */
+.exo-profile-gear > .exo-profile-gear-frame {
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+
+.exo-profile-gear-frame > img {
+  width: min(100cqw, calc(sqrt(var(--gear-ratio, 1)) * 60cqmin));
+  height: min(100cqh, calc(60cqmin / sqrt(var(--gear-ratio, 1))));
+  object-fit: contain;
+}
+
+.exo-profile-gear > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: calc(13px * var(--exo-scale, 1));
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.exo-profile-gear > span {
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(12px * var(--exo-scale, 1));
+}
+
+/* ── Signed out: the showcase around the sign-in ── */
+.exo-profile-welcome-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  min-height: 0;
+  padding: 24px var(--exo-gutter) 220px;
+  text-align: center;
+}
+
+.exo-profile-welcome-avatar {
+  margin-bottom: 8px;
+}
+
+.exo-profile-welcome-title {
+  margin: 0 0 10px;
+  font-size: clamp(44px, 5.6vw, 80px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.exo-profile-welcome-title.is-plain {
+  text-shadow: 0 2px 28px rgb(0 0 0 / 0.55);
+}
+
+.exo-profile-signin-panel {
+  display: grid;
+  gap: 10px;
+  width: min(400px, 100%);
+  padding: 18px;
+  border-radius: 24px;
+  text-align: left;
+}
+
+.exo-profile-signin-panel .exo-profile-form {
+  justify-items: stretch;
+  padding: 8px 0 0;
+}
+
+.exo-profile-signin-panel .exo-profile-form > .exo-field {
+  width: 100%;
+}
+
+.exo-profile-signin.is-big {
+  gap: 10px;
+}
+
+.exo-profile-signin.is-big > .set-btn {
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  min-height: 44px;
+  font-size: calc(13px * var(--exo-scale, 1));
+}
+
+/* The first way in is the page's one primary. */
+.exo-profile-signin.is-big > .set-btn:first-child {
+  border-color: var(--color-fg);
+  background: var(--color-fg);
+  color: var(--color-primary-fg);
+}
+
+.exo-profile-welcome-more {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* The parade: the starter looks drifting along the foot, the one on stage lit. */
+.exo-profile-parade {
+  position: absolute;
+  right: 0;
+  bottom: 20px;
+  left: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.exo-profile-parade-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  padding: 18px 16px 18px 0;
+  animation: exo-profile-parade 70s linear infinite;
+}
+
+.exo-profile-parade-track.is-paused {
+  animation-play-state: paused;
+}
+
+@keyframes exo-profile-parade {
+  to { translate: -50% 0; }
+}
+
+.exo-profile-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 10px;
+  width: 210px;
+  height: 172px;
+  padding: 14px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--profile-accent) 14%, #050506);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--profile-accent) 30%, transparent);
+  opacity: 0.72;
+  transition: opacity 600ms var(--ease-out), box-shadow 600ms var(--ease-out);
+}
+
+.exo-profile-card.is-on {
+  opacity: 1;
+  box-shadow: 0 0 0 1.5px var(--profile-accent), 0 0 30px color-mix(in srgb, var(--profile-accent) 45%, transparent);
+}
+
+.exo-profile-card-art {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 64%;
+}
+
+.exo-profile-card-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--profile-accent) 14%, #050506));
+}
+
+.exo-profile-card-art > img {
+  position: absolute;
+  inset: 0;
+}
+
+.exo-profile-card-avatar,
+.exo-profile-card-name {
+  position: relative;
+  z-index: 1;
+}
+
+.exo-profile-card-name {
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 700;
+}
+
+/* ── Sheets: Customize at the room's side so the profile shows live beside it; Account and the ways in centered ── */
+.exo-game-overlay:has(.exo-profile-sheet) > .exo-game-overlay-stage {
+  overflow: visible;
+  border: 0;
+  border-radius: 24px;
+  background: transparent;
+}
+
+.exo-game-overlay-presence .exo-game-overlay:has(.exo-profile-sheet.is-customize) {
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.exo-game-overlay:has(.exo-profile-sheet.is-customize) > .exo-game-overlay-scrim {
+  pointer-events: none;
+}
+
+.exo-game-overlay:has(.exo-profile-sheet.is-customize) > .exo-game-overlay-stage {
+  pointer-events: auto;
+}
+
+.exo-game-overlay:has(.exo-profile-sheet.is-customize) > .exo-game-overlay-stage {
+  width: min(500px, 100%);
+  height: 100%;
+  max-height: 100%;
+}
+
+.exo-game-overlay:has(.exo-profile-sheet.is-account) > .exo-game-overlay-stage {
+  width: min(640px, 100%);
+}
+
+.exo-game-overlay:has(.exo-profile-sheet.is-small) > .exo-game-overlay-stage {
+  width: min(520px, 100%);
+}
+
+.exo-game-overlay-scrim.is-clear {
+  background: transparent;
+}
+
+.exo-profile-sheet {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.exo-profile-sheet.is-customize {
+  height: 100%;
+}
+
+.exo-profile-sheet-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 20px 12px;
+}
+
+.exo-profile-sheet-head > h2 {
+  margin: 0;
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-sheet-error {
+  margin: 0 20px 8px;
+}
+
+.exo-profile-sheet-scroll {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: 26px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 20px 24px;
+}
+
+.exo-profile-sheet-body {
+  padding: 4px 20px 16px;
+}
+
+.exo-profile-sheet-body .exo-profile-form > .exo-field {
+  width: 100%;
+}
+
+.exo-profile-sheet-part {
+  display: grid;
+  gap: 12px;
+}
+
+.exo-profile-sheet-part > h3 {
+  margin: 0;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-name-field {
+  width: 100%;
+  margin: 0;
+}
+
+/* Media: the picture and the background side by side, the banner across under them. */
+.exo-profile-media-tiles {
+  display: grid;
+  grid-template-areas: "avatar background" "banner banner";
+  grid-template-columns: auto 1fr;
+  gap: 16px 18px;
+}
+
+.exo-profile-media-tile {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.exo-profile-media-tile.is-avatar { grid-area: avatar; }
+.exo-profile-media-tile.is-banner { grid-area: banner; }
+.exo-profile-media-tile.is-background { grid-area: background; }
+
+.exo-profile-media-tile > strong {
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-media-tile .exo-profile-actions {
+  justify-content: flex-start;
+}
+
+.exo-profile-media-preview {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--profile-accent) 10%, transparent);
+  box-shadow: inset 0 0 0 1px var(--exo-float-line);
+}
+
+.exo-profile-media-tile.is-avatar .exo-profile-media-preview {
+  width: 116px;
+  aspect-ratio: 1;
+  border-radius: 999px;
+}
+
+.exo-profile-media-tile.is-background .exo-profile-media-preview {
+  aspect-ratio: 16 / 9;
+}
+
+.exo-profile-media-tile.is-banner .exo-profile-media-preview {
+  aspect-ratio: 3 / 1;
+}
+
+.exo-profile-media-preview > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exo-profile-media-kind {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.62);
+  color: #fff;
+  font-size: calc(12px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.exo-profile-tiles.is-looks {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.exo-profile-tiles.is-pills {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.exo-profile-tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 100px;
+  padding: 14px 8px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--exo-float-line);
+  color: var(--color-fg);
+  cursor: pointer;
+  transition: background-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .exo-profile-tile:hover:not(:disabled) {
+    background-color: var(--hover-fill);
+  }
+}
+
+.exo-profile-tile[aria-checked="true"] {
+  background-color: color-mix(in srgb, var(--profile-accent) 12%, transparent);
+  box-shadow: inset 0 0 0 2px var(--profile-accent);
+}
+
+.exo-profile-tile.is-look {
+  min-height: 112px;
+}
+
+/* A tile's sample moves only while it is chosen, under the pointer or focused: two dozen samples moving at once were
+   most of Customize's work, every frame and again on each keystroke or step of a color (their keyframes read the
+   accent and the name). The rest show their style at rest. */
+.exo-profile-tile:not([aria-checked="true"], :hover, :focus-visible) :is(.exo-profile-nametag, .exo-profile-nametag *, .exo-profile-avatar-frame, .exo-profile-avatar-frame *)::before,
+.exo-profile-tile:not([aria-checked="true"], :hover, :focus-visible) :is(.exo-profile-nametag, .exo-profile-nametag *, .exo-profile-avatar-frame, .exo-profile-avatar-frame *)::after,
+.exo-profile-tile:not([aria-checked="true"], :hover, :focus-visible) :is(.exo-profile-nametag, .exo-profile-nametag *, .exo-profile-avatar-frame, .exo-profile-avatar-frame *) {
+  animation: none;
+}
+
+.exo-profile-tile-label {
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(12px * var(--exo-scale, 1));
+}
+
+/* A name's sample in a tile: sized to the tile by its letters (88% of the tile for a font a full em wide, as Pixel is), so
+   it is never clipped and Glow's and Neon's light falls free; a clip cut them to a hard box and wide fonts to "Erix T…". */
+.exo-profile-tile:has(> .exo-profile-nametag.is-tile) {
+  container-type: inline-size;
+}
+
+.exo-profile-nametag.is-tile {
+  max-width: none;
+  font-size: min(calc(20px * var(--exo-scale, 1)), 14cqi, calc(88cqi / var(--n, 4)));
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.exo-profile-pill[aria-checked="true"] {
+  border-color: var(--color-fg);
+  background: var(--color-fg);
+  color: var(--color-primary-fg);
+}
+
+.exo-profile-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exo-profile-swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  color: #000;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+
+.exo-profile-swatch.is-well {
+  background: conic-gradient(#ff5f6d, #ffc371, #f9f871, #3ee6b0, #4fd1ff, #6fa8ff, #ff5fd2, #ff5f6d);
+}
+
+.exo-profile-swatch.is-well > input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.exo-profile-swatch[aria-checked="true"],
+.exo-profile-swatch.is-well.is-on {
+  box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-fg);
+}
+
+.exo-profile-showcase-list {
+  display: grid;
+}
+
+.exo-profile-showcase-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  border-top: 1px solid var(--exo-float-line);
+}
+
+.exo-profile-showcase-row:first-child {
+  border-top: 0;
+}
+
+.exo-profile-showcase-row.is-off .set-name {
+  opacity: 0.55;
+}
+
+.set-btn.exo-profile-icon-btn {
+  width: 28px;
+  padding: 0;
+}
+
+.exo-profile-showcase-row > .exo-profile-icon-btn + :not(.exo-profile-icon-btn) {
+  margin-left: 6px;
+}
+
+/* The account sheet's groups follow each other as Settings' do. */
+.exo-profile-sheet.is-account .set-group + .set-group {
+  margin-top: 8px;
+}
+
+/* Reduce motion: everything holds still; the stage's looks only crossfade. */
+:root[data-exo-motion="reduce"] :is(.exo-profile-room, .exo-profile-sheet) :is(*, *::before, *::after) {
+  animation: none;
+}
+
+@media (max-width: 900px) {
+  .exo-profile-hero-id {
+    flex-wrap: wrap;
+  }
+
+  .exo-profile-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .exo-profile-most {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Trackers: three numbers to brag with, big, on the accent. */
+.exo-profile-trackers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.exo-profile-tracker {
+  display: grid;
+  gap: 4px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--profile-accent) 12%, rgb(var(--exo-ink-rgb) / 0.05));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--profile-accent) 36%, transparent);
+}
+
+.exo-profile-tracker-value {
+  overflow: hidden;
+  /* The accent at least this light on a dark page, so any accent reads as a figure (a black one was #4c on Void): a grey
+     one near the ink, a vivid one keeping its own colour (less chroma, lighter floor). */
+  color: oklch(from var(--profile-accent) max(l, calc(0.86 - c)) c h);
+  font-size: calc(28px * var(--exo-scale, 1));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Light's page is near white: the accent at most this light, so a white or pale accent reads as the ink beside the white
+   cards' black words (at 0.5 it was a mid grey), a vivid one as its own deep colour. */
+:root[data-exo-theme="light"] .exo-profile-tracker-value {
+  color: oklch(from var(--profile-accent) min(l, calc(0.26 + c)) c h);
+}
+
+.exo-profile-tracker-label {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: calc(13px * var(--exo-scale, 1));
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The game shelf: the favorite as wide art with its line, then rows of covers. */
+.exo-profile-favorite {
+  position: relative;
+  aspect-ratio: 3 / 1;
+  max-height: 300px;
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: 0 0 0 1.5px var(--profile-accent), 0 0 32px color-mix(in srgb, var(--profile-accent) 35%, transparent);
+}
+
+.exo-profile-favorite > :is(img, .exo-profile-game-art) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* A cover as the profile's stats keep it (the same picture in every app): it fills its frame; with none, the tile's
+   own fill holds its place. */
+img.exo-profile-cover-art {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.exo-profile-cover-art.is-blank,
+.exo-profile-game-art.is-blank {
+  display: block;
+  background: var(--exo-tile);
+}
+
+.exo-profile-shelf-row {
+  display: grid;
+  gap: 10px;
+}
+
+.exo-profile-shelf-row > h3 {
+  margin: 0;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+/* ── The canvas: 24 columns across the room, its rows shared out down the room's height, each block where it was put ── */
+.exo-profile-canvas {
+  /* Read by the blocks inside it, so the units are the canvas's own (it is their container). */
+  --profile-cell: calc(100cqw / var(--cols, 24));
+  --profile-row: min(calc(100cqh / var(--rows)), calc(100cqw / var(--cols, 24) * 2));
+  position: relative;
+  container-type: size;
+  isolation: isolate;
+  /* Each block keeps a 6px pad inside its cell; the canvas reaches 6px past the page on every side, so the blocks' edges
+     sit on the room's gutter (10px from the window) as every room's panes do. */
+  width: calc(100% + 12px);
+  height: calc(100% + 12px);
+  min-height: 120px;
+  margin: -6px;
+}
+
+.exo-profile-block {
+  position: absolute;
+  top: calc(var(--y) * var(--profile-row));
+  left: calc(var(--x) * var(--profile-cell));
+  z-index: calc(var(--z) + 51);
+  width: calc(var(--w) * var(--profile-cell));
+  height: calc(var(--h) * var(--profile-row));
+  padding: 6px;
+  rotate: var(--rot);
+}
+
+/* Depth: a picture or video block follows the pointer by how near it sits (its layer), the backdrop the other way.
+   Words never move off whole pixels: a block of text, figures or a showcase stays put, so it stays sharp. */
+.exo-profile-canvas:not(.is-editing) > .exo-profile-block.is-media {
+  --depth: calc((clamp(-3, var(--z), 6) + 4) * 1.5px);
+  translate: calc(var(--px, 0) * var(--depth)) calc(var(--py, 0) * var(--depth) * 0.7);
+  transition: translate 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The block under the pointer catches the light where it points; a picture or video one leans toward it too. */
+.exo-profile-canvas:not(.is-editing) > .exo-profile-block.is-media > .exo-profile-block-body {
+  transform: perspective(1100px) rotateX(calc(var(--ty, 0) * -4deg)) rotateY(calc(var(--tx, 0) * 5deg));
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exo-profile-canvas:not(.is-editing) > .exo-profile-block.is-media.is-tilted > .exo-profile-block-body {
+  transition-duration: 160ms;
+}
+
+.exo-profile-canvas:not(.is-editing) .exo-profile-block-body::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgb(255 255 255 / 0.16), transparent 58%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.exo-profile-canvas:not(.is-editing) .exo-profile-block.is-tilted > .exo-profile-block-body::after {
+  opacity: 1;
+}
+
+/* The room opening: one short fade of the page, the cheapest thing the compositor can do (nothing moving over glass). */
+.exo-profile-stage.is-entering .exo-profile-page {
+  animation: exo-profile-fade 220ms ease-out both;
+}
+
+@keyframes exo-profile-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── The room's opening (ProfileRoom › useOpening), as Exo Cinema's: the room loads unseen behind the page's black with
+   your picture in the accent's sweeping ring, then comes in whole as the picture grows away. ── */
+.exo-profile-stage.is-preparing > :not(.exo-profile-opening) {
+  visibility: hidden;
+}
+
+.exo-profile-opening {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+  pointer-events: none;
+  /* Its picture and ring wait 300ms: a profile already warm is in before then and shows no veil at all. */
+  animation: exo-profile-opening-in var(--dur-base) var(--ease-out) both;
+}
+
+.exo-profile-opening:not(.is-leaving) .exo-profile-opening-mark {
+  animation-delay: 300ms;
+}
+
+.exo-profile-opening.is-leaving {
+  animation: exo-profile-opening-out 420ms var(--ease-out) both;
+}
+
+.exo-profile-opening-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  animation: exo-profile-opening-settle var(--dur-flight) var(--ease-spring) both;
+}
+
+.exo-profile-opening.is-leaving .exo-profile-opening-mark {
+  animation: exo-profile-opening-away 420ms var(--ease-out) both;
+}
+
+.exo-profile-opening-mark > img,
+.exo-profile-opening-letter {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.exo-profile-opening-letter {
+  display: grid;
+  place-items: center;
+  --profile-avatar: 116px;
+  background: var(--exo-tile);
+  font-size: calc(var(--profile-avatar) * 0.42);
+  font-weight: 700;
+}
+
+/* The ring: the accent sweeping round the picture while the room loads. */
+.exo-profile-opening-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from var(--ring-turn, 0deg), transparent 0deg, var(--profile-accent) 140deg, transparent 300deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--profile-accent) 60%, transparent));
+  animation: exo-profile-opening-turn 1100ms linear infinite;
+}
+
+@property --ring-turn {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes exo-profile-opening-turn {
+  to { --ring-turn: 360deg; }
+}
+
+@keyframes exo-profile-opening-in {
+  from { opacity: 0; }
+}
+
+@keyframes exo-profile-opening-out {
+  to { opacity: 0; }
+}
+
+@keyframes exo-profile-opening-settle {
+  from { opacity: 0; transform: translateY(8px) scale(0.92); }
+}
+
+@keyframes exo-profile-opening-away {
+  to { opacity: 0; transform: scale(1.18); }
+}
+
+:root[data-exo-motion="reduce"] .exo-profile-opening,
+:root[data-exo-motion="reduce"] .exo-profile-opening * {
+  animation: none !important;
+}
+
+:root[data-exo-motion="reduce"] .exo-profile-opening.is-leaving {
+  opacity: 0;
+}
+
+
+.exo-profile-block-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+
+.exo-profile-block.is-showcase > .exo-profile-block-body,
+.exo-profile-block.is-text > .exo-profile-block-body {
+  padding: 16px 18px;
+}
+
+.exo-profile-block.is-showcase > .exo-profile-block-body > .exo-profile-showcase {
+  height: 100%;
+}
+
+/* Surfaces: Exo's glass; nothing; a window that lights what is behind it; the accent's tint. */
+/* Glass is Exo's own panel glass (exo-glass is-panel on the body), the same as every room's panes. */
+
+.exo-profile-block.is-window > .exo-profile-block-body {
+  -webkit-backdrop-filter: brightness(1.7) saturate(1.25);
+  backdrop-filter: brightness(1.7) saturate(1.25);
+  box-shadow: inset 0 0 0 1px rgb(var(--exo-ink-rgb) / 0.16);
+}
+
+.exo-profile-block.is-tint > .exo-profile-block-body {
+  background: color-mix(in srgb, var(--profile-accent) 24%, color-mix(in srgb, var(--color-bg) 50%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--profile-accent) 55%, transparent);
+}
+
+.exo-profile-block-media,
+.exo-profile-block-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.exo-profile-block-empty {
+  background: color-mix(in srgb, var(--profile-accent) 14%, transparent);
+}
+
+/* A block's frame: a ring drawn by a turning cone round its rounded box. */
+@property --exo-profile-turn {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.exo-profile-block.has-frame::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: 1;
+  padding: 3px;
+  border-radius: calc(var(--radius) + 3px);
+  pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+.exo-profile-block.is-frame-glow::before {
+  background: var(--profile-accent);
+}
+
+.exo-profile-block.is-frame-glow > .exo-profile-block-body {
+  box-shadow: 0 0 30px color-mix(in srgb, var(--profile-accent) 55%, transparent);
+}
+
+.exo-profile-block.is-frame-orbit::before {
+  background: conic-gradient(from var(--exo-profile-turn), transparent 0 60%, var(--profile-accent) 88%, #fff 92%, transparent 94%);
+  animation: exo-profile-ring 3.6s linear infinite;
+}
+
+.exo-profile-block.is-frame-holo::before {
+  background: conic-gradient(from var(--exo-profile-turn), #ff5f6d, #ffc371, #f9f871, #3ee6b0, #4fd1ff, #6fa8ff, #ff5fd2, #ff5f6d);
+  animation: exo-profile-ring 6s linear infinite;
+}
+
+.exo-profile-block.is-frame-fire::before {
+  padding: 4px;
+  background: conic-gradient(from var(--exo-profile-turn), #ff3d00, var(--profile-accent), #ffd36b, #ff3d00, #ff6a2b, #ffd36b, #ff3d00);
+  filter: blur(1px) drop-shadow(0 0 8px #ff6a2b);
+  animation: exo-profile-ring 2.4s linear infinite;
+}
+
+@keyframes exo-profile-ring {
+  to { --exo-profile-turn: 360deg; }
+}
+
+/* Editing: the grid under the blocks, a picked block outlined, its corner to resize. */
+.exo-profile-canvas.is-editing {
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(var(--exo-ink-rgb) / 0.1);
+}
+
+/* The grid, on a child of the canvas so its cells are the canvas's own. */
+.exo-profile-canvas.is-editing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgb(var(--exo-ink-rgb) / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--exo-ink-rgb) / 0.07) 1px, transparent 1px);
+  /* One line for each of 24's cells (four of the fine grid's), so the fine grid doesn't turn the page into a mesh. */
+  background-size: calc(var(--profile-cell) * var(--major, 1)) calc(var(--profile-row) * var(--major, 1));
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block * {
+  pointer-events: none;
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block > :is(.exo-profile-block-handle, .exo-profile-block-tools) {
+  pointer-events: auto;
+}
+
+/* Arranging: each block outlined and named, the one under the pointer brighter, the picked one solid. */
+.exo-profile-canvas.is-editing .exo-profile-block::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px dashed rgb(var(--exo-ink-rgb) / 0.32);
+  border-radius: calc(var(--radius) + 2px);
+  pointer-events: none;
+  transition: border-color 120ms var(--ease-out);
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block:hover::after {
+  border-color: rgb(var(--exo-ink-rgb) / 0.7);
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block.is-selected::after {
+  border: 2px solid #fff;
+}
+
+.exo-profile-canvas.is-editing .exo-profile-block.is-moving {
+  cursor: grabbing;
+  opacity: 0.85;
+}
+
+.exo-profile-block-tag {
+  display: none;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.72);
+  color: #fff;
+  font-size: calc(12px * var(--exo-scale, 1));
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* A block's name while the pointer is on it; not on the picked one, which the panel names: there it sat over the
+   block's own heading ("Gear" over "Gear"). */
+.exo-profile-canvas.is-editing .exo-profile-block:hover:not(.is-selected) > .exo-profile-block-tag {
+  display: block;
+}
+
+/* The picked block is drawn over the rest while it is arranged, so all of it can be taken. */
+.exo-profile-canvas.is-editing .exo-profile-block.is-selected {
+  z-index: 200;
+}
+
+/* The picked block's edges and corners: take one to resize from that side. */
+.exo-profile-block-handle {
+  position: absolute;
+  z-index: 5;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.55);
+}
+
+.exo-profile-block-handle.is-n,
+.exo-profile-block-handle.is-s { left: calc(50% - 6px); cursor: ns-resize; }
+.exo-profile-block-handle.is-e,
+.exo-profile-block-handle.is-w { top: calc(50% - 6px); cursor: ew-resize; }
+.exo-profile-block-handle.is-n,
+.exo-profile-block-handle.is-ne,
+.exo-profile-block-handle.is-nw { top: -2px; }
+.exo-profile-block-handle.is-s,
+.exo-profile-block-handle.is-se,
+.exo-profile-block-handle.is-sw { bottom: -2px; }
+.exo-profile-block-handle.is-e,
+.exo-profile-block-handle.is-ne,
+.exo-profile-block-handle.is-se { right: -2px; }
+.exo-profile-block-handle.is-w,
+.exo-profile-block-handle.is-nw,
+.exo-profile-block-handle.is-sw { left: -2px; }
+.exo-profile-block-handle.is-ne,
+.exo-profile-block-handle.is-sw { cursor: nesw-resize; }
+.exo-profile-block-handle.is-nw,
+.exo-profile-block-handle.is-se { cursor: nwse-resize; }
+
+/* The picked block's own toolbar, on its top right: copy, forward, back, remove. */
+.exo-profile-block-tools {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 6;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(18 18 20 / 0.9);
+  box-shadow: inset 0 0 0 1px rgb(var(--exo-ink-rgb) / 0.14);
+  cursor: default;
+}
+
+.exo-profile-block-tool {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.exo-profile-block-tool:hover {
+  background: var(--hover-fill);
+}
+
+.exo-profile-block-tool.is-danger {
+  color: var(--color-bad);
+}
+
+.exo-profile-block:focus-visible {
+  outline: 2px solid var(--profile-accent);
+  outline-offset: 2px;
+}
+
+/* ── Text blocks ── */
+.exo-profile-text {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  height: 100%;
+  overflow: hidden;
+  color: var(--color-fg);
+  font-size: calc(13px * var(--exo-scale, 1));
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.exo-profile-text.is-center { text-align: center; }
+.exo-profile-text.is-right { text-align: right; }
+.exo-profile-text.is-l { font-size: calc(20px * var(--exo-scale, 1)); }
+.exo-profile-text.is-xl { font-size: calc(28px * var(--exo-scale, 1)); }
+.exo-profile-text.is-s { font-size: calc(12px * var(--exo-scale, 1)); }
+
+.exo-profile-text > :is(p, h3, h4, blockquote, ul, pre) {
+  margin: 0;
+}
+
+.exo-profile-text > h3 {
+  font-size: 1.6em;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.exo-profile-text > h4 {
+  font-size: 1.25em;
+  font-weight: 700;
+}
+
+.exo-profile-text > blockquote {
+  padding-left: 12px;
+  border-left: 3px solid var(--profile-accent);
+  color: var(--color-muted);
+}
+
+.exo-profile-text > ul {
+  padding-left: 1.2em;
+}
+
+.exo-profile-text-art {
+  overflow: hidden;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.85em;
+  line-height: 1.15;
+  white-space: pre;
+}
+
+.exo-profile-text code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: rgb(var(--exo-ink-rgb) / 0.1);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.exo-profile-text-gap {
+  height: 0.4em;
+}
+
+.exo-profile-text-link,
+.exo-profile-text-spoiler {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.exo-profile-text-link {
+  color: var(--profile-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.exo-profile-text-spoiler {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: rgb(var(--exo-ink-rgb) / 0.85);
+  color: transparent;
+}
+
+.exo-profile-text-spoiler.is-shown {
+  background: rgb(var(--exo-ink-rgb) / 0.12);
+  color: inherit;
+  cursor: default;
+}
+
+/* ── Customize's tabs and Layout's inspector ── */
+.exo-profile-sheet .exo-profile-tabs {
+  align-self: flex-start;
+  width: max-content;
+  margin: 0 20px 10px;
+}
+
+.exo-profile-pill[aria-pressed="true"] {
+  border-color: var(--profile-accent);
+  background: var(--exo-selected);
+}
+
+.exo-profile-inspector {
+  display: grid;
+  gap: 12px;
+}
+
+.exo-profile-inspector-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.exo-profile-inspector-row.is-stacked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.exo-profile-inspector-row > .exo-profile-tiles,
+.exo-profile-inspector-row > .exo-profile-actions {
+  grid-column: 2 / -1;
+}
+
+.exo-profile-inspector-label {
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(12px * var(--exo-scale, 1));
+}
+
+.exo-profile-inspector-value {
+  min-width: 44px;
+  color: var(--exo-glass-panel-secondary);
+  font-size: calc(12px * var(--exo-scale, 1));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.exo-profile-actions.is-start {
+  justify-content: flex-start;
+}
+
+/* Customize's rows, as Settings': a block's text in a field of its own, a slider with its value, a part's name. */
+.exo-profile-text-field {
+  display: block;
+  width: 100%;
+  min-height: 112px;
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  outline: none;
+  background-color: var(--exo-fill);
+  box-shadow: var(--exo-field-rim);
+  color: var(--color-fg);
+  font: inherit;
+  font-family: var(--font-sans), "Yu Gothic UI", "Yu Gothic", "Meiryo UI", sans-serif;
+  font-size: calc(13px * var(--exo-scale, 1));
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.exo-profile-text-field:focus-visible {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 1px;
+}
+
+.exo-profile-sheet-part-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exo-profile-sheet-sub {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.exo-profile-sheet-sub h4 {
+  margin: 0;
+  color: var(--color-fg);
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+.exo-profile-block-list {
+  display: grid;
+  gap: 2px;
+}
+
+.exo-profile-block-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.exo-profile-block-row:hover {
+  background: var(--hover-fill);
+}
+
+.exo-profile-block-row.is-selected {
+  background: var(--exo-selected);
+}
+
+.exo-profile-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 210px;
+}
+
+.exo-profile-range-value {
+  min-width: 40px;
+  color: var(--color-muted);
+  font-size: calc(12px * var(--exo-scale, 1));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.exo-profile-part-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exo-profile-part-edit .exo-field {
+  width: 190px;
+}
+
+.exo-profile-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.exo-profile-layer-name {
+  overflow: hidden;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: var(--color-fg);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.exo-profile-showcase-row.is-selected .exo-profile-layer-name {
+  color: var(--profile-accent);
+  font-weight: 700;
+}
+
+.exo-profile-shelf-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+:root[data-exo-motion="reduce"] .exo-profile-block::before {
+  animation: none;
+}
+
+/* Customizing: the page steps left of the panel, so all of it shows beside it while it is arranged. */
+.exo-profile-stage.is-customizing .exo-profile-room-scroll {
+  padding-right: calc(min(500px, 100%) + var(--exo-gutter) + 12px);
+}
+
+/* One screen, never a scroll: the page scales down from its top until all of it fits (FitPage). */
+.exo-profile-room-scroll.is-fit {
+  overflow: hidden;
+}
+
+.exo-profile-room-scroll.is-fit > .exo-profile-page {
+  transform-origin: top center;
+}
+
+/* A layout fills the room edge to edge: the hero as a strip across the top, the layout taking all the height under it. */
+.exo-profile-room-scroll.is-fit:has(> .exo-profile-page.is-filled) {
+  padding-bottom: 18px;
+}
+
+.exo-profile-page.is-filled {
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  height: 100%;
+}
+
+.exo-profile-page.is-filled .exo-profile-hero {
+  padding-top: 8px;
+}
+
+.exo-profile-page.is-filled .exo-profile-banner {
+  height: clamp(110px, 21vh, 250px);
+  aspect-ratio: auto;
+}
+
+.exo-profile-page.is-filled .exo-profile-hero.has-banner .exo-profile-hero-id {
+  margin-top: -76px;
+}
+
+.exo-profile-page.is-filled .exo-profile-hero-name,
+.exo-profile-page.is-filled .exo-profile-hero-actions {
+  margin-bottom: 12px;
+}
+
+/* The banner's art leans with the pointer too, a little behind the page. */
+.exo-profile-banner > :is(img, video) {
+  scale: 1.06;
+  translate: calc(var(--px, 0) * -10px) calc(var(--py, 0) * -5px);
+  transition: translate 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exo-profile-effect {
+  translate: calc(var(--px, 0) * -26px) calc(var(--py, 0) * -16px);
+  transition: translate 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reduce motion: no grain moving, no leaning, no tilt, no arriving. */
+:root[data-exo-motion="reduce"] :is(.exo-profile-backdrop, .exo-profile-effect, .exo-profile-banner > *, .exo-profile-block) {
+  translate: none;
+}
+
+:root[data-exo-motion="reduce"] .exo-profile-block-body {
+  transform: none;
+}
+
+:root[data-exo-motion="reduce"] .exo-profile-grain::before,
+:root[data-exo-motion="reduce"] .exo-profile-stage.is-entering * {
+  animation: none;
+}
+
+/* A showcase in a block fills it: its title, then its covers or cards in one row sized to the block, names whole. */
+.exo-profile-block .exo-profile-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+}
+
+.exo-profile-block :is(.exo-profile-recent, .exo-profile-most, .exo-profile-setup) {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+  grid-auto-rows: 0;
+  row-gap: 0;
+  overflow: hidden;
+}
+
+/* Covers keep their own 2:3 shape at the block's height, a whole row of as many as fit; a name takes up to two lines. */
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: flex-start;
+  column-gap: 12px;
+  /* The covers that don't fit wrap to a second row, wholly out of sight below this one. */
+  row-gap: 100px;
+  container-type: size;
+}
+
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover {
+  position: relative;
+  display: block;
+  flex: none;
+  width: calc(100cqh * 2 / 3);
+  height: 100cqh;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+/* In a block each cover takes the block's whole height; its name and when it was played sit over its foot. */
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent .exo-profile-cover-art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.86));
+  pointer-events: none;
+}
+
+/* Over the cover's dark foot, so white in every theme (Light's dark ink vanished there). */
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover > :is(strong, span:not(.exo-profile-cover-art)) {
+  position: absolute;
+  right: 8px;
+  left: 8px;
+  z-index: 1;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.7);
+}
+
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover > strong {
+  bottom: 24px;
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.2;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover > span {
+  bottom: 7px;
+  color: #d0d0d4;
+}
+
+.exo-profile-block .exo-profile-game {
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.exo-profile-block .exo-profile-setup {
+  grid-template-columns: minmax(0, 2.6fr) repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* A setup's halves on their own: the gear sharing the block's width, the part list taking all of it. */
+.exo-profile-block .exo-profile-setup.is-gear {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.exo-profile-block .exo-profile-setup.is-pc {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* A showcase drawn smaller or larger (its Size): every word and card in it, by one factor. */
+.exo-profile-block[data-size="s"] > .exo-profile-block-body { --exo-scale: 0.85; }
+.exo-profile-block[data-size="l"] > .exo-profile-block-body { --exo-scale: 1.25; }
+.exo-profile-block[data-size="xl"] > .exo-profile-block-body { --exo-scale: 1.6; }
+
+.exo-profile-block .exo-profile-rig {
+  grid-column: auto;
+  overflow: hidden;
+}
+
+.exo-profile-block .exo-profile-gear {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.exo-profile-block .exo-profile-gear > :is(.exo-profile-gear-frame, .exo-profile-gear-art, .exo-profile-gear-blank) {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  aspect-ratio: auto;
+}
+
+/* The PC as a part list in a block, as a part picker lists a build: each part's kind small over its name, in as many
+   columns as the block's width holds, so a whole build fits a short block. */
+.exo-profile-block .exo-profile-rig {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  align-content: start;
+  gap: 8px 18px;
+  padding: 12px 16px;
+}
+
+.exo-profile-block .exo-profile-rig-part {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+}
+
+/* Trackers in a block: the tiles take its height, their figures centred in them, as short as the block is. */
+.exo-profile-block.is-showcase > .exo-profile-block-body:has(> .exo-profile-trackers) {
+  padding: 6px;
+}
+
+.exo-profile-block .exo-profile-trackers {
+  height: 100%;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.exo-profile-block .exo-profile-tracker {
+  align-content: center;
+  min-height: 0;
+  padding: 6px 20px;
+  overflow: hidden;
+}
+
+/* Cards in a clear block stand on the page alone, so each is the profile's glass, as a glass block is: a bare lift let
+   the effect and the banner through (rain streaked across the figures) and on Light was grey beside the white blocks.
+   A number card keeps the accent through its glass. */
+.exo-profile-block.is-clear :is(.exo-profile-tracker, .exo-profile-gear, .exo-profile-rig) {
+  background-color: var(--glassy-overlay);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8) var(--glassy-overlay-tone);
+  backdrop-filter: blur(16px) saturate(1.8) var(--glassy-overlay-tone);
+}
+
+.exo-profile-block.is-clear .exo-profile-tracker {
+  background-color: color-mix(in srgb, var(--profile-accent) 10%, var(--glassy-overlay));
+}
+
+/* Solid: the theme's solid panel, as a glass block takes there. */
+:root[data-exo-glass="solid"] .exo-profile-block.is-clear :is(.exo-profile-tracker, .exo-profile-gear, .exo-profile-rig) {
+  background-color: var(--exo-solid-panel);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:root[data-exo-glass="solid"] .exo-profile-block.is-clear .exo-profile-tracker {
+  background-color: color-mix(in srgb, var(--profile-accent) 10%, var(--exo-solid-panel));
+}
+
+/* The PC alone in a block shares the block's height among its rows, each part centred in its share: in a tall block its
+   rows sat at the top over an empty half, beside a full Gear block. */
+.exo-profile-block .exo-profile-setup.is-pc > .exo-profile-rig {
+  grid-auto-rows: minmax(min-content, 1fr);
+  align-content: stretch;
+}
+
+.exo-profile-block .exo-profile-setup.is-pc .exo-profile-rig-part {
+  align-content: center;
+}
+
+.exo-profile-block .exo-profile-rig-part > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Layout with nothing picked: what can be added, as pictures, three across. */
+.exo-profile-add-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.exo-profile-add-tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  min-height: 74px;
+  padding: 10px 6px;
+  border: 0;
+  border-radius: 14px;
+  background-color: var(--exo-fill);
+  box-shadow: var(--exo-rim);
+  color: var(--color-fg);
+  font: inherit;
+  font-size: calc(12px * var(--exo-scale, 1));
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 120ms var(--ease-out);
+}
+
+.exo-profile-add-tile:hover:not(:disabled) {
+  background-color: var(--hover-fill);
+}
+
+.exo-profile-add-tile:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.exo-profile-sheet-subhead {
+  margin: 14px 0 2px;
+  color: var(--color-fg);
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 600;
+}
+
+/* More: the rarer settings (opacity, turn, blend, layer), folded away until asked for. */
+.exo-profile-more {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-fg);
+  font: inherit;
+  font-size: calc(13px * var(--exo-scale, 1));
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.exo-profile-more > svg {
+  transition: rotate 160ms var(--ease-out);
+}
+
+.exo-profile-more[aria-expanded="true"] > svg {
+  rotate: 180deg;
+}
+
+/* The PC on its own: its parts straight on the block, no second card inside it, in columns as wide as it allows. */
+.exo-profile-block .exo-profile-setup.is-pc > .exo-profile-rig {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* A media row's look at what it is now: the picture round, the banner wide, the background as a screen is. */
+.exo-profile-media-thumb {
+  display: block;
+  flex: none;
+  overflow: hidden;
+  width: 64px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--exo-selected);
+}
+
+.exo-profile-media-thumb.is-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+}
+
+.exo-profile-media-thumb.is-banner {
+  width: 96px;
+  height: 32px;
+}
+
+.exo-profile-media-thumb > :is(img, video) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* When a cover was played sits on one line under it, however narrow the cover. */
+.exo-profile-cover > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The shelf in a block: the favorite takes what the rows below leave (its 3:1 frame was taller than most blocks and
+   squeezed to a strip with its title cut), never less than a readable band. */
+.exo-profile-block .exo-profile-shelf > .exo-profile-favorite {
+  flex: 1 1 0;
+  min-height: 96px;
+  max-height: none;
+  aspect-ratio: auto;
+}
+
+/* Its rows share the rest, each cover as tall as its row with its name over its foot, as every other row of covers in
+   a block draws (fixed 2:3 covers ran past the block's foot and cut their names off). */
+.exo-profile-block .exo-profile-shelf > .exo-profile-shelf-row {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.exo-profile-block .exo-profile-shelf-row > .exo-profile-recent {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 100px 12px;
+  min-height: 0;
+  overflow: hidden;
+  container-type: size;
+}
+
+.exo-profile-block .exo-profile-shelf-row > .exo-profile-recent > .exo-profile-cover {
+  position: relative;
+  display: block;
+  flex: none;
+  width: calc(100cqh * 2 / 3);
+  height: 100cqh;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.exo-profile-block .exo-profile-shelf-row > .exo-profile-recent .exo-profile-cover-art {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.exo-profile-block .exo-profile-shelf-row > .exo-profile-recent > .exo-profile-cover::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, transparent, rgb(0 0 0 / 0.86));
+  pointer-events: none;
+}
+
+.exo-profile-block .exo-profile-shelf-row > .exo-profile-recent > .exo-profile-cover > strong {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
+  z-index: 1;
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #fff;
+  line-height: 1.2;
+  white-space: normal;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.7);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* The stats band in a block is the block's own surface (glass or clear, as picked): its own glass panel inside a glass
+   block drew a second frame. As short as the block is, each figure centred in its column and smaller in a short block,
+   so the figure and its words stay whole. */
+.exo-profile-block .exo-profile-stats {
+  height: 100%;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  container-type: size;
+}
+
+.exo-profile-block .exo-profile-stat {
+  align-content: safe center;
+  min-height: 0;
+  padding: 6px 22px;
+  overflow: hidden;
+}
+
+.exo-profile-block .exo-profile-stat-value { font-size: min(calc(28px * var(--exo-scale, 1)), 36cqh); }
+.exo-profile-block .exo-profile-stat-label { font-size: min(calc(13px * var(--exo-scale, 1)), 17cqh); }
+
+/* The PC alone in a block is its parts straight on the block: its card's rounded corner was still kept and clipped
+   the first part's first letter ("CPU" lost its C's left side). */
+.exo-profile-block .exo-profile-setup.is-pc > .exo-profile-rig {
+  border-radius: 0;
+}
+
+/* Covers too small to carry words (a short block) show only their art; their names come with a taller block. */
+@container (max-height: 170px) {
+  .exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover > :is(strong, span:not(.exo-profile-cover-art)),
+  .exo-profile-block .exo-profile-showcase > .exo-profile-recent > .exo-profile-cover::after {
+    display: none;
+  }
+}
+
+/* Cards inside a block (the PC's parts, each piece of gear, each number) are a lift of the block's glass, never a second
+   glass inside it: one quiet fill and one hairline, as Exo's cards are. */
+.exo-profile-block :is(.exo-profile-gear, .exo-profile-rig) {
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-fg) 5%, transparent);
+  box-shadow: inset 0 0 0 1px var(--exo-float-line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Sign out's one question, under the account's row, in the words' own color: it's asked, not a note. */
+.exo-profile-account-ask {
+  margin: 8px 0 0;
+  font-size: calc(13px * var(--exo-scale, 1));
+}
+
+/* ── From Exo Launcher's settings.css: the profile's forms, codes and digits ── */
+/* ── Exo profile (profile/ProfileRoom.tsx; the room's own layout is in profile.css) ── */
+
+/* What opens under a row (setting up, a link's codes, a rename, the recovery code): its fields and buttons at the
+   row's right edge, the next row keeping its hairline. Its bottom room is its buttons' own, so it springs from nothing. */
+.exo-profile-unfold + .exo-set-item {
+  border-top: 1px solid var(--exo-float-line);
+}
+
+/* Link a PC opens at the top of the PCs' list: under the list's own hairline, as a row would be. */
+.exo-set-list > .exo-profile-unfold:first-child {
+  border-top: 1px solid var(--exo-float-line);
+  padding-top: 12px;
+}
+
+.exo-profile-form,
+.exo-profile-code {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  padding-bottom: 12px;
+}
+
+.exo-profile-code-field {
+  font-variant-numeric: tabular-nums;
+}
+
+.exo-profile-spacer {
+  flex: 1;
+}
+
+.exo-profile-wait {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 12px;
+}
+
+/* The link's codes: 8 digits on the PC joining (its QR beside them), 6 on both once they meet; the recovery code once. */
+.exo-profile-code {
+  grid-template-columns: auto auto;
+  justify-content: end;
+  align-items: center;
+  column-gap: 20px;
+}
+
+.exo-profile-code > .exo-profile-actions,
+.exo-profile-code > .form-error,
+.exo-profile-code > .exo-profile-recovery {
+  grid-column: 1 / -1;
+}
+
+.exo-profile-code-words {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-fg);
+}
+
+.exo-profile-digits,
+.exo-profile-recovery {
+  color: var(--color-fg);
+  font-size: calc(20px * var(--exo-scale, 1));
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+
+.exo-profile-qr {
+  width: 112px;
+  height: 112px;
+  border-radius: 8px;
+}
+
+/* The Exo account's ways in, one under another at the row's right edge, each as wide as the widest. */
+.exo-profile-signin {
+  display: grid;
+  gap: 8px;
+}
+
+.exo-profile-signin > .set-btn {
+  justify-content: flex-start;
+  gap: 8px;
+}
