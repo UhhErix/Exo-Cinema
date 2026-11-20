@@ -5,7 +5,7 @@ Publish it as a [release asset](https://github.com/UhhErix/Exo-Cinema/releases),
 
 | App | Version | Release asset | Bytes | SHA-256 |
 | --- | --- | --- | ---: | --- |
-| Exo Cinema | 1.5.1 | `ExoCinema-1.5.1-Setup.exe` | 63,026,926 | `1dcda15c07741e64f5f3f046c483fb4585ab79923367b7a233739e24435c145e` |
+| Exo Cinema | 1.5.2 | `ExoCinema-1.5.2-Setup.exe` | 63,045,208 | `6e6f5742ca89bd3b068e4a7ad8297bd84f7bdc6bdb18266d7cd115e5bc9b1b53` |
 
 Verify the installer with `Get-FileHash -Algorithm SHA256 <path>` in PowerShell.
 The existing in-app update endpoint stays unchanged until a compatible cutover is verified.
