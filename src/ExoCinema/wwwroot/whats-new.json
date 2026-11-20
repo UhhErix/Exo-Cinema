@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.5.2",
+    "items": [
+      {
+        "icon": "Glass",
+        "title": "RTX Video HDR for SDR films",
+        "detail": "Turns SDR films and shows into HDR on an NVIDIA RTX card when your display is in HDR."
+      },
+      {
+        "icon": "Play",
+        "title": "Smooth motion",
+        "detail": "Matches frame timing to your screen's refreshes in Settings › Playback so 24 fps pans play cleanly without AI frame generation."
+      }
+    ]
+  },
+  {
     "version": "1.5.1",
     "items": [
       {
