@@ -25,9 +25,13 @@ node --test tests/
 ## Verify and ship
 
 - Every CHANGELOG entry ends with how it was checked, in italics: seen on screen, which tests cover it, or code only. Unsure means code only.
-- A cloud session (Devin's Windows Server VMs) can build and run the tests, but has no Jellyfin server or real screen to check playback on: say so in the PR and mark the entry as checked in tests or code only.
+- Playback needs a Jellyfin server and a real screen. If you did not play the change against a server, mark the entry as checked in tests or code only and say so in the PR.
 - Releases: `tools/Build-Release.ps1` writes `artifacts\ExoCinema-Setup.exe`, its `.sha256` and `whats-new.json`; `RELEASES.md` records the version and checksum.
 
 ## Pull requests
 
-One change per PR on a `devin/` branch against `main`. Fill in the template: what changed and how it was tested. Never merge your own PR.
+One change per PR against `main`. Fill in the template: what changed and how it was tested, and say plainly what was not checked. Never merge your own PR. Never force-push.
+
+## Reviews
+
+Focus on correctness, security and privacy (a new network destination, a secret, a server address or user name in a commit or test) and the rules above. Skip formatting the compiler or analyzers already enforce.
