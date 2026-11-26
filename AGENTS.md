@@ -7,7 +7,7 @@ Exo Cinema plays the films and shows on your Jellyfin server in Exo's look, on W
 - Jellyfin only: the library, its pictures and playback reports come from the one server you signed in to. No other sources, catalogs or picture hosts.
 - Every place Exo Cinema connects passes `src/ExoCinema/Net/Egress.cs`, and each fixed destination is named in `PRIVACY.md` (`EgressTests` checks). A new host needs both.
 - No secrets, tokens, server addresses or user names in commits. Test data stays synthetic (`SECURITY-SCRUB.md`).
-- The look is Exo Launcher's: its [`DESIGN.md`](https://github.com/UhhErix/Exo-Launcher/blob/main/apps/launcher/DESIGN.md) and the `exo-design` skill in Exo-Launcher's `apps/launcher/.agents/skills/`. Words in the app are plain and short; no hint lines under controls.
+- The look is Exo Launcher's: its [`DESIGN.md`](https://github.com/UhhErix/Exo-Launcher/blob/main/apps/launcher/DESIGN.md) (a map; the full rules are `apps/launcher/.impeccable/design-full.md`) and the `exo-design` skill in Exo-Launcher's `apps/launcher/.agents/skills/`. Words in the app are plain and short; no hint lines under controls.
 - `libmpv-2.dll` is not in the repository; `lib/mpv/SOURCE.txt` names the build and its hash.
 
 ## Build and test
@@ -30,7 +30,9 @@ node --test tests/
 
 ## Pull requests
 
-One change per PR against `main`. Fill in the template: what changed and how it was tested, and say plainly what was not checked. Never merge your own PR. Never force-push.
+One change per PR against `main`. Fill in the template: what changed and how it was tested, and say plainly what was not checked.
+
+CI: `cinema-ci.yml` runs `node --test tests/*.test.mjs` and `dotnet test` on every PR and push to `main`; `announce-release.yml` posts a published release to Discord.
 
 ## Reviews
 
